@@ -15,7 +15,7 @@ FUN_FACTS = [
     "I’m learning data visualization and 3d printing and modeling.",
     "I want to build video games, websites, browser extensions, and apps that I would use.",
 ]
-PHOTO_PATH = "assets\abstract-momentary-10k-fg.jpeg"  # Put a file in repo root or set a URL
+PHOTO_PATH = "assets\abstract-momentary-10k-fg.jpg"  # Put a file in repo root or set a URL
 
 # ---------- Layout ----------
 col1, col2 = st.columns([1, 2], vertical_alignment="center")
