@@ -16,19 +16,29 @@ color_counts.columns = ["Color", "Count"]
 # Pie Chart
 st.title("Pie Chart Demo")
 
+# Extract unique colors
+unique_colors = color_counts["Color"].tolist()
+
+# Create a mapping dictionary where the label = the color itself
+color_map = {c: c.lower() for c in unique_colors}
+
 fig = px.pie(
     color_counts,
     names="Color",
     values="Count",
     title="Color Distribution",
-    color_discrete_sequence=px.colors.qualitative.Set3
+    color="Color",
+    color_discrete_map=color_map
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
-options = [
-    "1. Data is loaded using os to read a csv file and read using pandas.",
-    "2. Counted the frequency of each color.",
-    "3. Displayed results as a Plotly pie chart.",
-]
-st.selectbox("How was this char created?", options)
+# Help text
+with st.expander("How is this chart created?"):
+    st.write(
+        """
+        - Data is loaded from os and read as a csv with pandas.  
+        - The frequency of each color is counted.
+        - The results are displayed as a Plotly interactive pie chart.
+        """
+    )
