@@ -26,7 +26,7 @@ fig = px.pie(
     color_counts,
     names="Color",
     values="Count",
-    title="Color Distribution",
+    title="Color Distribution Pie Chart",
     color="Color",
     color_discrete_map=color_map
 )
