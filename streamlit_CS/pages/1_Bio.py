@@ -1,4 +1,5 @@
 import streamlit as st
+from pathlib import Path
 
 st.title("👋 My Bio")
 
@@ -15,7 +16,10 @@ FUN_FACTS = [
     "I’m learning data visualization and 3d printing and modeling.",
     "I want to build video games, websites, browser extensions, and apps that I would use.",
 ]
-PHOTO_PATH = "assets/abstract-momentary-10k-fg.jpg"  # Put a file in repo root or set a URL
+
+PHOTO_PATH = Path(__file__).parent.parent / "assets" / "abstract-momentary-10k-fg.jpg"
+
+st.image(PHOTO_PATH, use_container_width=True)  # Put a file in repo root or set a URL
 
 # ---------- Layout ----------
 col1, col2 = st.columns([1, 2], vertical_alignment="center")

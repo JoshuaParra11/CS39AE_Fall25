@@ -7,6 +7,8 @@ st.set_page_config(page_title="Pie Chart", page_icon="🥧")
 
 # Read csv
 data_path = os.path.join(os.path.dirname(__file__), "..", "data", "pie_demo.csv")
+
+# Use the first column only
 df = pd.read_csv(data_path)
 
 # Count colors
