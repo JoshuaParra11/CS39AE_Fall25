@@ -19,8 +19,6 @@ FUN_FACTS = [
 
 PHOTO_PATH = Path(__file__).parent.parent / "assets" / "abstract-momentary-10k-fg.jpg"
 
-st.image(PHOTO_PATH, use_container_width=True)  # Put a file in repo root or set a URL
-
 # ---------- Layout ----------
 col1, col2 = st.columns([1, 2], vertical_alignment="center")
 
