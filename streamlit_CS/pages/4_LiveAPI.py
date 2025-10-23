@@ -7,10 +7,10 @@ import time
 # Read API 
 # Streamlit page setup
 # --- Page Setup ---
-st.set_page_config(page_title="Live Weather API Demo (Simple)", page_icon="📡", layout="wide")
+st.set_page_config(page_title="Live Weather API Demo", page_icon="📡", layout="wide")
 
 st.title("📡 Simple Weather Live Data Demo (Open-Meteo)")
-st.caption("Friendly demo with manual refresh + fallback data so it never crashes.")
+st.caption("Live temperature data with auto-refresh and growing trend line.")
 
 # --- Config ---
 lat, lon = 39.7392, -104.9903  # Denver
@@ -22,7 +22,7 @@ SAMPLE_DF = pd.DataFrame([
 ])
 
 # --- Cached Fetch ---
-@st.cache_data(ttl=600, show_spinner=False)  # Cache 10 min
+@st.cache_data(ttl=600, show_spinner=False)
 def get_weather():
     """Fetch current weather safely. Returns (df, err_msg)."""
     try:
@@ -43,14 +43,22 @@ def get_weather():
 
 # --- Auto Refresh Controls ---
 st.subheader("🔁 Auto Refresh Settings")
-refresh_sec = st.slider("Refresh every (sec)", 10, 120, 30)
+
+# Slider now supports up to 5 minutes (300 seconds)
+refresh_sec = st.slider("Refresh every (sec)", 30, 300, 120)
+
 auto_refresh = st.toggle("Enable auto-refresh", value=False)
 manual_refresh = st.button("🔄 Refresh Now")
+
 st.caption(f"Last refreshed at: {time.strftime('%H:%M:%S')}")
 
 if manual_refresh:
     st.cache_data.clear()
     st.toast("Data manually refreshed.", icon="🔁")
+
+# --- Session History Setup ---
+if "history" not in st.session_state:
+    st.session_state["history"] = pd.DataFrame(columns=["time", "temperature", "wind"])
 
 # --- Main View ---
 st.subheader("🌤️ Live Weather Data (Denver)")
@@ -60,13 +68,28 @@ if err or df is None:
     st.warning(f"{err}\nShowing sample data so the demo continues.")
     df = SAMPLE_DF.copy()
 
+# Append new data point to session history
+st.session_state["history"] = pd.concat(
+    [st.session_state["history"], df], ignore_index=True
+)
+
+# Keep last 200 readings
+st.session_state["history"] = st.session_state["history"].tail(200)
+
+# Display latest data and trend
 st.dataframe(df, use_container_width=True)
 
-fig = px.line(df, x="time", y="temperature", markers=True,
-              title="Current Temperature (°C)", labels={"temperature": "Temp (°C)"})
+fig = px.line(
+    st.session_state["history"],
+    x="time",
+    y="temperature",
+    markers=True,
+    title="Live Temperature Over Time (°C)",
+    labels={"temperature": "Temperature (°C)"},
+)
 st.plotly_chart(fig, use_container_width=True)
 
-# --- Auto-refresh behavior ---
+# --- Auto-refresh logic ---
 if auto_refresh:
     time.sleep(refresh_sec)
     st.cache_data.clear()
