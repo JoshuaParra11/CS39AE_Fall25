@@ -19,13 +19,15 @@ if "page" not in st.session_state:
 # --- CSS ---
 st.markdown("""
 <style>
+/* --- Top Bar --- */
 .top-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     background-color: #0E1117;
     padding: 0.75rem 1.5rem;
-    border-bottom: 1px solid #30333A;
+    border-bottom: 2px solid #30333A; /* thicker divider line */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* subtle drop shadow */
 }
 .top-bar-center {
     flex: 1;
@@ -35,6 +37,30 @@ st.markdown("""
     font-weight: 600;
     text-align: center;
 }
+
+/* --- Sidebar --- */
+.block-container {
+    padding-top: 0rem !important; /* tighter spacing under top bar */
+}
+[data-testid="stVerticalBlock"] > div:first-child {
+    border-right: 2px solid #30333A; /* vertical divider line between sidebar and content */
+}
+
+/* --- Sidebar Buttons --- */
+.stButton > button {
+    border: none;
+    border-bottom: 1px solid #333; /* horizontal dividers between buttons */
+    background-color: transparent;
+    color: white;
+    text-align: left;
+    font-size: 1rem;
+    padding: 0.6rem 0.8rem;
+}
+.stButton > button:hover {
+    background-color: #1A1D23;
+}
+
+/* --- Misc --- */
 .sidebar-toggle {
     background: none;
     border: none;
