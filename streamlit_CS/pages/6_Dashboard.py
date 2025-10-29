@@ -74,13 +74,13 @@ else:
 
 with sidebar_col:
     if st.session_state.sidebar_open:
-        st.header("Navigation")
-        selected = st.selectbox(
-            "Go to",
-            ["Home", "Data", "About Me"],
-            index=["Home", "Data", "About Me"].index(st.session_state.page),
-        )
-        st.session_state.page = selected
+        st.markdown("<br>", unsafe_allow_html=True)  # small space below toggle
+        if st.button("🏠 Home", use_container_width=True):
+            st.session_state.page = "Home"
+        if st.button("📊 Data", use_container_width=True):
+            st.session_state.page = "Data"
+        if st.button("👤 About Me", use_container_width=True):
+            st.session_state.page = "About Me"
     else:
         st.write("")  # keeps layout consistent
 
