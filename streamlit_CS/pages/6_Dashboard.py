@@ -28,6 +28,8 @@ st.markdown("""
     padding: 0.75rem 1.5rem;
     border-bottom: 2px solid #30333A; /* thicker divider line */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* subtle drop shadow */
+    position: relative;
+    z-index: 100; /* keep top bar above other elements */
 }
 .top-bar-center {
     flex: 1;
@@ -39,11 +41,9 @@ st.markdown("""
 }
 
 /* --- Sidebar --- */
-.block-container {
-    padding-top: 0rem !important; /* tighter spacing under top bar */
-}
-[data-testid="stVerticalBlock"] > div:first-child {
-    border-right: 2px solid #30333A; /* vertical divider line between sidebar and content */
+div[data-testid="stHorizontalBlock"] > div:first-child {
+    border-right: 2px solid #30333A; /* divider between sidebar and main area */
+    background-color: #0E1117; /* subtle darker background for sidebar area */
 }
 
 /* --- Sidebar Buttons --- */
@@ -60,7 +60,7 @@ st.markdown("""
     background-color: #1A1D23;
 }
 
-/* --- Misc --- */
+/* --- Toggle Button --- */
 .sidebar-toggle {
     background: none;
     border: none;
@@ -70,6 +70,8 @@ st.markdown("""
     padding: 0;
     margin: 0;
 }
+
+/* --- Misc --- */
 button[title="View fullscreen"] {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
