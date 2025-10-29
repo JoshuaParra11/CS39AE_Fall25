@@ -75,12 +75,18 @@ else:
 with sidebar_col:
     if st.session_state.sidebar_open:
         st.markdown("<br>", unsafe_allow_html=True)  # small space below toggle
-        if st.button("🏠 Home", use_container_width=True):
+
+        if st.button("Home", use_container_width=True):
             st.session_state.page = "Home"
-        if st.button("📊 Data", use_container_width=True):
+            st.session_state.sidebar_open = False
+
+        if st.button("Data", use_container_width=True):
             st.session_state.page = "Data"
-        if st.button("👤 About Me", use_container_width=True):
+            st.session_state.sidebar_open = False
+
+        if st.button("About Me", use_container_width=True):
             st.session_state.page = "About Me"
+            st.session_state.sidebar_open = False
     else:
         st.write("")  # keeps layout consistent
 
