@@ -79,14 +79,17 @@ with sidebar_col:
         if st.button("Home", use_container_width=True):
             st.session_state.page = "Home"
             st.session_state.sidebar_open = False
+            st.rerun()
 
         if st.button("Data", use_container_width=True):
             st.session_state.page = "Data"
             st.session_state.sidebar_open = False
+            st.rerun()
 
         if st.button("About Me", use_container_width=True):
             st.session_state.page = "About Me"
             st.session_state.sidebar_open = False
+            st.rerun()
     else:
         st.write("")  # keeps layout consistent
 
