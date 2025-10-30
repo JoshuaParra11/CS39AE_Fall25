@@ -26,8 +26,7 @@ st.markdown("""
     justify-content: space-between;
     background-color: #0E1117;
     padding: 0.75rem 1.5rem;
-    border-bottom: 2px solid #444; /* horizontal divider line for separation */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); /* subtle depth */
+    border-bottom: 1px solid #333;  /* same line weight and color as sidebar button dividers */
     position: relative;
     z-index: 100;
 }
@@ -98,7 +97,7 @@ with st.container():
 if st.session_state.sidebar_open:
     sidebar_col, main_col = st.columns([1.2, 4])
 else:
-    sidebar_col, main_col = st.columns([0.02, 5])
+    sidebar_col, main_col = st.columns([0.05, 4.95])
 
 with sidebar_col:
     if st.session_state.sidebar_open:
