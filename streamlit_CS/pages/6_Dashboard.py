@@ -26,10 +26,10 @@ st.markdown("""
     justify-content: space-between;
     background-color: #0E1117;
     padding: 0.75rem 1.5rem;
-    border-bottom: 2px solid #30333A; /* thicker divider line */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* subtle drop shadow */
+    border-bottom: 2px solid #444; /* horizontal divider line for separation */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); /* subtle depth */
     position: relative;
-    z-index: 100; /* keep top bar above other elements */
+    z-index: 100;
 }
 .top-bar-center {
     flex: 1;
@@ -98,7 +98,7 @@ with st.container():
 if st.session_state.sidebar_open:
     sidebar_col, main_col = st.columns([1.2, 4])
 else:
-    sidebar_col, main_col = st.columns([0.1, 5])
+    sidebar_col, main_col = st.columns([0.02, 5])
 
 with sidebar_col:
     if st.session_state.sidebar_open:
