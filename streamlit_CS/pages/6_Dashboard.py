@@ -121,6 +121,10 @@ with sidebar_col:
         st.write("")  # keeps layout consistent
 
 
+# --- Template Slider State ---
+if "data_template" not in st.session_state:
+    st.session_state.data_template = 0  # start at Template 0 (the map view)
+
 # --- Page Renderers ---
 def render_home():
     st.title("Pandemics Through History")
@@ -128,7 +132,37 @@ def render_home():
 
 def render_data():
     st.title("Data Overview")
-    st.dataframe(df.head())
+
+    # --- Horizontal Navigation Bar for Templates ---
+    col_prev, col_label, col_next = st.columns([1, 3, 1])
+
+    with col_prev:
+        if st.button("←", use_container_width=True):
+            st.session_state.data_template = (st.session_state.data_template - 1) % 3  # wrap around
+            st.rerun()
+
+    with col_label:
+        templates = ["Template 1: Map View", "Template 2: Statistics", "Template 3: Insights"]
+        st.markdown(f"<h5 style='text-align:center'>{templates[st.session_state.data_template]}</h5>", unsafe_allow_html=True)
+
+    with col_next:
+        if st.button("→", use_container_width=True):
+            st.session_state.data_template = (st.session_state.data_template + 1) % 3  # wrap around
+            st.rerun()
+
+    st.markdown("---")
+
+    # --- Template Content ---
+    if st.session_state.data_template == 0:
+        st.subheader("🌍 Template 1: Interactive Map")
+        st.write("Here we'll show the Folium heatmap and related visuals.")
+        # (later: embed folium map + stats)
+    elif st.session_state.data_template == 1:
+        st.subheader("📊 Template 2: Statistical Overview")
+        st.write("Placeholder for data summaries and KPIs.")
+    elif st.session_state.data_template == 2:
+        st.subheader("🧠 Template 3: Insights")
+        st.write("Placeholder for insights text or markdown summaries.")
 
 def render_about():
     st.title("About Me")
