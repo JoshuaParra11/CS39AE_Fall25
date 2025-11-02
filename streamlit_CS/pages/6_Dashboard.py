@@ -134,45 +134,23 @@ def render_data():
     st.title("Data Overview")
 
     # --- Horizontal Navigation Bar for Templates ---
-col_prev, col_label, col_next = st.columns([0.5, 5, 0.5])
+    col_prev, col_label, col_next = st.columns([0.4, 4.2, 0.4])
 
-arrow_style = """
-    <style>
-    .nav-btn button {
-        background: none;
-        border: 1px solid #444;
-        color: white;
-        font-size: 1.25rem;
-        cursor: pointer;
-        padding: 0.25rem 0.75rem;
-        border-radius: 4px;
-    }
-    .nav-btn button:hover {
-        background-color: #1A1D23;
-    }
-    </style>
-"""
-st.markdown(arrow_style, unsafe_allow_html=True)
-
-with col_prev:
-    with st.container():
-        st.markdown("<div class='nav-btn'>", unsafe_allow_html=True)
-        if st.button("←", key="prev_template"):
-            st.session_state.data_template = (st.session_state.data_template - 1) % 3
+    with col_prev:
+        if st.button("←", use_container_width=True):
+            st.session_state.data_template = (st.session_state.data_template - 1) % 3  # wrap around
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
 
-with col_label:
-    templates = ["Template 1: Map View", "Template 2: Statistics", "Template 3: Insights"]
-    st.markdown(f"<h5 style='text-align:center; margin-top:0.3rem'>{templates[st.session_state.data_template]}</h5>", unsafe_allow_html=True)
+    with col_label:
+        templates = ["Template 1: Map View", "Template 2: Statistics", "Template 3: Insights"]
+        st.markdown(f"<h5 style='text-align:center'>{templates[st.session_state.data_template]}</h5>", unsafe_allow_html=True)
 
-with col_next:
-    with st.container():
-        st.markdown("<div class='nav-btn'>", unsafe_allow_html=True)
-        if st.button("→", key="next_template"):
-            st.session_state.data_template = (st.session_state.data_template + 1) % 3
+    with col_next:
+        if st.button("→", use_container_width=True):
+            st.session_state.data_template = (st.session_state.data_template + 1) % 3  # wrap around
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
 
     # --- Template Content ---
     if st.session_state.data_template == 0:
@@ -185,6 +163,19 @@ with col_next:
     elif st.session_state.data_template == 2:
         st.subheader("🧠 Template 3: Insights")
         st.write("Placeholder for insights text or markdown summaries.")
+
+    # --- Template Indicators ---
+    st.markdown("<br>", unsafe_allow_html=True)
+    num_templates = 3
+    active = st.session_state.data_template
+
+    dots_html = ""
+    for i in range(num_templates):
+        size = "12px" if i == active else "8px"
+        color = "#1DB954" if i == active else "#666666"
+        dots_html += f"<span style='display:inline-block;width:{size};height:{size};margin:0 6px;background-color:{color};border-radius:50%;'></span>"
+
+    st.markdown(f"<div style='text-align:center;'>{dots_html}</div>", unsafe_allow_html=True)
 
 def render_about():
     st.title("About Me")
