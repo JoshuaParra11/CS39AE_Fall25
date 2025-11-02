@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 # from streamlit_folium import st_folium
-from folium.plugins import HeatMap
+# from folium.plugins import HeatMap
 import folium
 import plotly.express as px
 import os
