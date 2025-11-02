@@ -134,23 +134,45 @@ def render_data():
     st.title("Data Overview")
 
     # --- Horizontal Navigation Bar for Templates ---
-    col_prev, col_label, col_next = st.columns([1, 3, 1])
+col_prev, col_label, col_next = st.columns([0.5, 5, 0.5])
 
-    with col_prev:
-        if st.button("←", use_container_width=True):
-            st.session_state.data_template = (st.session_state.data_template - 1) % 3  # wrap around
+arrow_style = """
+    <style>
+    .nav-btn button {
+        background: none;
+        border: 1px solid #444;
+        color: white;
+        font-size: 1.25rem;
+        cursor: pointer;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+    }
+    .nav-btn button:hover {
+        background-color: #1A1D23;
+    }
+    </style>
+"""
+st.markdown(arrow_style, unsafe_allow_html=True)
+
+with col_prev:
+    with st.container():
+        st.markdown("<div class='nav-btn'>", unsafe_allow_html=True)
+        if st.button("←", key="prev_template"):
+            st.session_state.data_template = (st.session_state.data_template - 1) % 3
             st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    with col_label:
-        templates = ["Template 1: Map View", "Template 2: Statistics", "Template 3: Insights"]
-        st.markdown(f"<h5 style='text-align:center'>{templates[st.session_state.data_template]}</h5>", unsafe_allow_html=True)
+with col_label:
+    templates = ["Template 1: Map View", "Template 2: Statistics", "Template 3: Insights"]
+    st.markdown(f"<h5 style='text-align:center; margin-top:0.3rem'>{templates[st.session_state.data_template]}</h5>", unsafe_allow_html=True)
 
-    with col_next:
-        if st.button("→", use_container_width=True):
-            st.session_state.data_template = (st.session_state.data_template + 1) % 3  # wrap around
+with col_next:
+    with st.container():
+        st.markdown("<div class='nav-btn'>", unsafe_allow_html=True)
+        if st.button("→", key="next_template"):
+            st.session_state.data_template = (st.session_state.data_template + 1) % 3
             st.rerun()
-
-    st.markdown("---")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # --- Template Content ---
     if st.session_state.data_template == 0:
