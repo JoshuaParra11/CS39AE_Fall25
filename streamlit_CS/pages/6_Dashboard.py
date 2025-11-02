@@ -1,10 +1,13 @@
 import streamlit as st
 import pandas as pd
-from streamlit_folium import st_folium as st_folium
+from streamlit_folium import st_folium
 from folium.plugins import HeatMap
 import folium
 import plotly.express as px
 import os
+import sys
+
+st.write(f"Streamlit is using this Python executable: {sys.executable}")
 
 # --- Page Setup ---
 st.set_page_config(page_title="Dashboard", layout="wide")
