@@ -148,26 +148,24 @@ def render_data():
     # --- Columns Layout ---
     map_col, details_col = st.columns([2, 1])
 
-    # --- Load GeoJSON ---
+    # --- Load GeoJSON and Data ---
     geojson_path = os.path.join(os.path.dirname(__file__), "..", "data", "continents.geojson")
     map_df = df.dropna(subset=["Latitude", "Longitude", "Continent"])
 
     # --- MAP COLUMN ---
     with map_col:
-        st.subheader("Interactive Map")
+        st.subheader("🗺️ Interactive Map")
 
-        # --- If pandemic selected → Show Heatmap ---
+        # --- CASE 1: Pandemic selected → Show its heatmap ---
         if st.session_state.selected_pandemic:
             pandemic_name = st.session_state.selected_pandemic.split(" (")[0]
             st.write(f"**Showing heatmap for:** {pandemic_name}")
 
-            heat_data = (
-                map_df[map_df["Disease"] == pandemic_name][["Latitude", "Longitude"]].values.tolist()
-            )
+            heat_data = map_df[map_df["Disease"] == pandemic_name][["Latitude", "Longitude"]].values.tolist()
 
             m = folium.Map(
                 location=[20, 0],
-                zoom_start=3,
+                zoom_start=2,
                 no_wrap=True,
                 max_bounds=True,
                 world_copy_jump=False,
@@ -178,7 +176,7 @@ def render_data():
             if len(heat_data) > 0:
                 HeatMap(heat_data, radius=25, blur=15, min_opacity=0.4).add_to(m)
             else:
-                st.warning("No coordinates available for this pandemic.")
+                st.warning("No coordinate data available for this pandemic.")
 
             if st.button("← Back to Continent View"):
                 st.session_state.selected_pandemic = None
@@ -186,67 +184,52 @@ def render_data():
 
             st_folium(m, key="heatmap_view", width=700, height=450)
 
-        # --- Else if continent selected → Show its pandemics list ---
+        # --- CASE 2: Continent selected → Show continent-focused map ---
         elif st.session_state.selected_continent:
             continent = st.session_state.selected_continent
 
+            # Filter pandemics in this continent
+            continent_pandemics = map_df[map_df["Continent"].str.lower() == continent.lower()]
+
+            # Create map centered on continent
             m = folium.Map(
                 location=[20, 0],
                 zoom_start=2,
                 no_wrap=True,
                 max_bounds=True,
                 world_copy_jump=False,
+                control_scale=True,
             )
 
-            # Add continent GeoJSON with highlight
+            # Highlight selected continent
             continents_layer = folium.GeoJson(
                 geojson_path,
                 name="continents",
                 style_function=lambda feature: {
-                    "fillColor": "#1DB954" if feature["properties"]["CONTINENT"] == continent else "#444",
+                    "fillColor": "#1DB954" if feature["properties"]["CONTINENT"].lower() == continent.lower() else "#444",
                     "color": "black",
                     "weight": 1,
                     "fillOpacity": 0.3,
                 },
-                highlight_function=lambda x: {"weight": 2, "fillOpacity": 0.5},
-            )
-            continents_layer.add_to(m)
+            ).add_to(m)
 
-            # --- Focus map on the selected continent ---
+            # Auto-zoom to selected continent
             try:
+                import geopandas as gpd
                 gdf = gpd.read_file(geojson_path)
-                bounds = gdf[gdf["CONTINENT"] == continent].total_bounds
-                m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
+                bounds = gdf[gdf["CONTINENT"].str.lower() == continent.lower()].total_bounds  # [minx, miny, maxx, maxy]
+                if len(bounds) == 4:
+                    m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
             except Exception as e:
                 st.warning(f"Could not auto-zoom to continent: {e}")
 
-            # --- Add popup inside map with pandemic options ---
-            continent_pandemics = map_df[map_df["Continent"] == continent]
-
-            if not continent_pandemics.empty:
-                options_html = "<b>Select a pandemic:</b><br>"
-                for _, row in continent_pandemics.iterrows():
-                    label = f"{row['Disease']} ({row['Year']})"
-                    options_html += f"{label}<br>"
-
-                popup = folium.Popup(options_html, max_width=250)
-                folium.Marker(
-                    [continent_pandemics["Latitude"].mean(), continent_pandemics["Longitude"].mean()],
-                    icon=folium.Icon(color="green", icon="info-sign"),
-                    popup=popup,
-                ).add_to(m)
-            else:
-                st.info(f"No pandemic data available for {continent}.")
-
-            # --- Back Button ---
             if st.button("← Back to World View"):
                 st.session_state.selected_continent = None
                 st.rerun()
 
-            # --- Display map ---
             st_folium(m, key="continent_view", width=700, height=450)
 
-        # --- Else: Default world map view ---
+        # --- CASE 3: Default → World map with all continents ---
         else:
             m = folium.Map(
                 location=[20, 0],
@@ -254,6 +237,7 @@ def render_data():
                 no_wrap=True,
                 max_bounds=True,
                 world_copy_jump=False,
+                control_scale=True,
             )
 
             folium.GeoJson(
@@ -272,7 +256,12 @@ def render_data():
             map_output = st_folium(m, key="world_map", width=700, height=450)
 
             if map_output and map_output.get("last_object_clicked_tooltip"):
-                clicked_continent = map_output["last_object_clicked_tooltip"].replace("Continent: ", "").strip().title()
+                clicked_continent = (
+                    map_output["last_object_clicked_tooltip"]
+                    .replace("Continent: ", "")
+                    .strip()
+                    .title()
+                )
                 st.session_state.selected_continent = clicked_continent
                 st.rerun()
 
@@ -280,17 +269,33 @@ def render_data():
     with details_col:
         st.subheader("📋 Details & Stats")
 
-        # --- When no continent is selected ---
+        # 1️⃣ Default (world view)
         if not st.session_state.selected_continent:
             st.info("Click a continent on the map to see pandemics in that region.")
 
-        # --- When a continent is selected but no pandemic yet ---
+        # 2️⃣ Continent view
         elif st.session_state.selected_continent and not st.session_state.selected_pandemic:
             continent = st.session_state.selected_continent
-            st.markdown(f"**Selected Continent:** {continent}")
-            st.write("Pandemic options are now shown directly inside the map (popup).")
+            continent_pandemics = map_df[map_df["Continent"].str.lower() == continent.lower()].reset_index()
 
-        # --- When a specific pandemic is selected ---
+            if not continent_pandemics.empty:
+                with st.expander(f"Pandemics in {continent}", expanded=True):
+                    pandemic_options = [
+                        f"{row['Disease']} ({row['Year']})" for _, row in continent_pandemics.iterrows()
+                    ]
+                    selected_option = st.selectbox(
+                        "Select a pandemic to view heatmap:",
+                        options=pandemic_options,
+                        index=None,
+                        placeholder="Choose an event..."
+                    )
+                    if selected_option:
+                        st.session_state.selected_pandemic = selected_option
+                        st.rerun()
+            else:
+                st.warning(f"No pandemic data found for {continent} in dataset.")
+
+        # 3️⃣ Pandemic view
         elif st.session_state.selected_pandemic:
             st.success(f"Currently viewing heatmap for: {st.session_state.selected_pandemic}")
 
@@ -302,8 +307,8 @@ def render_data():
     st.subheader("Insights")
     st.write(
         """
-        This map shows where pandemics have occurred throughout history.
-        Click on a continent to explore specific events, and view their spread intensity.
+        Click on a continent to explore pandemics that occurred there.  
+        Then, select a specific event to visualize its geographical spread as a heatmap.
         """
     )
 
