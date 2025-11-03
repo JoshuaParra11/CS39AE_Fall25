@@ -144,48 +144,39 @@ def render_data():
 
     # --- Data Prep ---
     geojson_path = os.path.join(os.path.dirname(__file__), "..", "data", "continents.geojson")
-    map_df = df.dropna(subset=["Latitude", "Longitude", "Continent"])
     
-    continent_list = ["Select a Continent..."] + sorted(map_df["Continent"].unique().tolist())
+    # *** CHANGE: Filter out (0,0) coordinates and missing data ***
+    map_df = df[(df["Latitude"] != 0) & (df["Longitude"] != 0)].dropna(
+        subset=["Latitude", "Longitude", "Continent", "Year", "Disease"]
+    )
+    
+    # Create a sorted list of unique diseases for the dropdown
+    disease_list = ["Select a Pandemic..."] + sorted(map_df["Disease"].unique().tolist())
 
     # --- Right Column: Details & Controls ---
     with details_col:
         st.subheader("Filters")
         
-        selected_continent = st.selectbox(
-            "First, choose a continent:",
-            options=continent_list,
-            key="continent_selector"
+        # *** CHANGE: Direct pandemic selection dropdown ***
+        selected_disease = st.selectbox(
+            "Choose a pandemic to display:",
+            options=disease_list,
+            key="disease_selector"
         )
-
-        selected_pandemic_name = None
-        
-        if selected_continent and selected_continent != "Select a Continent...":
-            pandemic_list = ["Select a Pandemic..."] + sorted(
-                map_df[map_df["Continent"] == selected_continent]["Disease"].unique().tolist()
-            )
-            
-            selected_pandemic_name = st.selectbox(
-                f"Next, choose a pandemic in {selected_continent}:",
-                options=pandemic_list,
-                key="pandemic_selector"
-            )
 
     # --- Left Column: Map ---
     with map_col:
-        st.subheader("Pandemic Map")
+        st.subheader("≡ƒù║∩╕Å Pandemic Map")
 
-        # --- Set Map's Initial View ---
         map_center = [20, 0]
         zoom_level = 2
         
-        # If a pandemic is selected, find its data to center the map
-        if selected_pandemic_name and selected_pandemic_name != "Select a Pandemic...":
-            pandemic_rows = map_df[map_df["Disease"] == selected_pandemic_name]
+        # If a disease is selected, find its data to center the map
+        if selected_disease and selected_disease != "Select a Pandemic...":
+            pandemic_rows = map_df[map_df["Disease"] == selected_disease]
             if not pandemic_rows.empty:
-                # Center on the average location for that pandemic
                 map_center = [pandemic_rows["Latitude"].mean(), pandemic_rows["Longitude"].mean()]
-                zoom_level = 4
+                zoom_level = 3
 
         m = folium.Map(
             location=map_center,
@@ -193,16 +184,11 @@ def render_data():
             control_scale=True
         )
 
-        # --- Add Continent Layer with Hover Tooltip (Always Visible) ---
+        # --- Add Continent Layer (Always Visible) ---
         folium.GeoJson(
             geojson_path,
             name="continents",
-            style_function=lambda feature: {
-                "fillColor": "#1DB954",
-                "color": "black",
-                "weight": 1,
-                "fillOpacity": 0.1,
-            },
+            style_function=lambda feature: {"fillColor": "#1DB954", "color": "black", "weight": 1, "fillOpacity": 0.1},
             tooltip=folium.GeoJsonTooltip(
                 fields=["CONTINENT"], 
                 aliases=[""],
@@ -210,22 +196,33 @@ def render_data():
             )
         ).add_to(m)
 
-        # --- If a Pandemic is Selected, Add a HeatMap ---
-        if selected_pandemic_name and selected_pandemic_name != "Select a Pandemic...":
+        # --- If a Disease is Selected, Add HeatMap AND Markers ---
+        if selected_disease and selected_disease != "Select a Pandemic...":
             from folium.plugins import HeatMap
             
-            pandemic_rows = map_df[map_df["Disease"] == selected_pandemic_name]
+            pandemic_rows = map_df[map_df["Disease"] == selected_disease]
             
             if not pandemic_rows.empty:
-                # Create a list of [lat, lon] for the heatmap
+                # 1. Add the Heatmap
                 heat_data = pandemic_rows[["Latitude", "Longitude"]].values.tolist()
-                
-                # Add the heatmap layer to the map
                 HeatMap(heat_data, radius=25, blur=15).add_to(m)
-            else:
-                st.warning(f"No location data found for {selected_pandemic_name}")
 
-        # --- Render the Final Map in Streamlit ---
+                # 2. Add a Marker for each location of that pandemic
+                for _, row in pandemic_rows.iterrows():
+                    popup_html = f"""
+                    <b>Location:</b> {row['Location']}<br>
+                    <b>Year:</b> {row['Year']}<br>
+                    <b>Deaths:</b> {row['Death toll (estimate)']}
+                    """
+                    folium.Marker(
+                        location=[row["Latitude"], row["Longitude"]],
+                        popup=popup_html,
+                        tooltip=row['Location'],
+                        icon=folium.Icon(color="red", icon="info-sign"),
+                    ).add_to(m)
+            else:
+                st.warning(f"No location data found for {selected_disease}")
+
         st_folium(m, key="main_map", width=800, height=500)
 
     # --- Insights Section ---
@@ -233,10 +230,9 @@ def render_data():
     st.subheader("Insights")
     st.write(
         """
-        This section is for your text analysis. For example, you could note that early pandemics 
-        are often localized to specific empires (e.g., Roman, Byzantine), while later events 
-        show more global spread due to increased trade and travel. The map interaction helps 
-        visualize this geographic distribution over time.
+        Select a pandemic from the dropdown to see its geographic spread. The heatmap shows the
+        density of recorded occurrences, while the red markers pinpoint specific locations with
+        available data.
         """
     )
 
