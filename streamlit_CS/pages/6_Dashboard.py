@@ -87,7 +87,7 @@ def toggle_sidebar():
 with st.container():
     col1, col2, col3 = st.columns([1, 5, 1])
     with col1:
-        icon = "ΓåÉ" if st.session_state.sidebar_open else "Γÿ░"
+        icon = "←" if st.session_state.sidebar_open else "☰"
         st.button(icon, on_click=toggle_sidebar, key="sidebar_btn")
     with col2:
         st.markdown(f"<div class='top-bar-center'>{st.session_state.page}</div>", unsafe_allow_html=True)
@@ -176,25 +176,31 @@ def render_data():
 
         # --- Continent Selection View ---
         else:
-            m = folium.Map(location=[20, 0], zoom_start=2)
-            folium.GeoJson(
-                geojson_path, # THIS LINE IS CHANGED
-                name='continents',
-                style_function=lambda feature: {
-                    'fillColor': '#1DB954',
-                    'color': 'black',
-                    'weight': 1,
-                    'fillOpacity': 0.2,
-                },
-                highlight_function=lambda x: {'weight': 3, 'fillOpacity': 0.5},
-                tooltip=folium.GeoJsonTooltip(fields=['CONTINENT'], aliases=['Continent:'])
-            ).add_to(m)
-            map_output = st_folium(m, key="continent_map", width=700, height=450)
+            if "continent_map_obj" not in st.session_state:
+                m = folium.Map(location=[20, 0], zoom_start=2)
+                folium.GeoJson(
+                    geojson_path,
+                    name='continents',
+                    style_function=lambda feature: {
+                        'fillColor': '#1DB954',
+                        'color': 'black',
+                        'weight': 1,
+                        'fillOpacity': 0.2,
+                    },
+                    highlight_function=lambda x: {'weight': 3, 'fillOpacity': 0.5},
+                    tooltip=folium.GeoJsonTooltip(fields=['CONTINENT'], aliases=['Continent:'])
+                ).add_to(m)
+                st.session_state.continent_map_obj = m
+            else:
+                m = st.session_state.continent_map_obj
+
+            map_output = st_folium(m, key="continent_map", width=700, height=450, returned_objects=[])
 
             if map_output and map_output.get("last_object_clicked_tooltip"):
                 clicked_continent = map_output["last_object_clicked_tooltip"]
-                st.session_state.selected_continent = clicked_continent
-                st.rerun()
+                if st.session_state.get("selected_continent") != clicked_continent:
+                    st.session_state.selected_continent = clicked_continent
+                    st.rerun()
 
     # --- DETAILS COLUMN ---
     with details_col:
