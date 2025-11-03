@@ -4,3 +4,4 @@ plotly>=5.22
 requests>=2.31.0
 folium>=0.16
 streamlit-folium>=0.19
+geopandas
