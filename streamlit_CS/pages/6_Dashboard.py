@@ -175,28 +175,25 @@ def render_data():
             world_population = 8_100_000_000
             percentage_of_world = (total_deaths / world_population) * 100 if world_population > 0 else 0
 
-            # --- CHANGE 1: Display Total Deaths with st.metric ---
             st.metric(label="Total Estimated Deaths", value=f"{int(total_deaths):,}")
 
-            # --- CHANGE 2: Create a cleaner "bullet gauge" chart ---
             fig = go.Figure(go.Indicator(
                 mode = "gauge+number",
                 value = percentage_of_world,
                 title = {'text': "% of Current World Population", 'font': {'size': 16}},
                 number = {'suffix': "%", 'font': {'size': 20}},
                 gauge = {
-                    'axis': {'range': [None, 0.1], 'visible': False}, # Hide the gauge axis line
+                    'axis': {'range': [None, 0.1], 'visible': False},
                     'shape': "bullet",
-                    'bar': {'color': "red", 'thickness': 0.5}, # The "filled" part
-                    'bgcolor': "#E0E0E0", # The "unfilled" part
+                    'bar': {'color': "red", 'thickness': 0.5},
+                    'bgcolor': "#E0E0E0",
                 }
             ))
             
-            # --- CHANGE 3: Remove the plot background and axes ---
             fig.update_layout(
                 height=100, 
                 margin=dict(l=10, r=10, t=40, b=10),
-                plot_bgcolor='rgba(0,0,0,0)', # Transparent background
+                plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)'
             )
             
@@ -263,6 +260,36 @@ def render_data():
                 st.warning(f"No location data found for {selected_disease}")
 
         st_folium(m, key="main_map", width=800, height=500)
+
+    # --- NEW: Bar Chart Section ---
+    st.markdown("---") # Divider below the map
+    st.subheader("Deaths by Location")
+
+    if selected_disease and selected_disease != "Select a Pandemic...":
+        pandemic_rows = map_df[map_df["Disease"] == selected_disease]
+        
+        # Aggregate deaths by location
+        deaths_by_location = pandemic_rows.groupby("Location")["Death Toll (est)"].sum().reset_index()
+        deaths_by_location = deaths_by_location.sort_values(by="Death Toll (est)", ascending=False)
+
+        if not deaths_by_location.empty:
+            fig_bar = px.bar(
+                deaths_by_location,
+                x="Death Toll (est)",
+                y="Location",
+                orientation="h",
+                title=f"Estimated Deaths for {selected_disease} by Location",
+                labels={"Death Toll (est)": "Estimated Deaths", "Location": "Location"},
+                color_discrete_sequence=px.colors.qualitative.Set1,
+                height=min(500, 50 * len(deaths_by_location)) # Adjust height dynamically
+            )
+            fig_bar.update_layout(yaxis={'categoryorder':'total ascending'}) # Sort bars
+            st.plotly_chart(fig_bar, use_container_width=True)
+        else:
+            st.info(f"No detailed death toll data by location for {selected_disease}.")
+    else:
+        st.info("Select a pandemic to see the breakdown of deaths by location.")
+
 
     # --- Insights Section ---
     st.markdown("---")
