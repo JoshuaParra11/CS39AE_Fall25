@@ -146,14 +146,12 @@ def render_data():
     geojson_path = os.path.join(os.path.dirname(__file__), "..", "data", "continents.geojson")
     map_df = df.dropna(subset=["Latitude", "Longitude", "Continent"])
     
-    # Create a sorted list of continents for the dropdown, with a placeholder first
     continent_list = ["Select a Continent..."] + sorted(map_df["Continent"].unique().tolist())
 
     # --- Right Column: Details & Controls ---
     with details_col:
         st.subheader("Filters")
         
-        # Dropdown to select a continent (replaces the map-click interaction)
         selected_continent = st.selectbox(
             "First, choose a continent:",
             options=continent_list,
@@ -162,9 +160,7 @@ def render_data():
 
         selected_pandemic_name = None
         
-        # If a continent is chosen, show the pandemic "slider menu" (as a dropdown)
         if selected_continent and selected_continent != "Select a Continent...":
-            # Create a list of pandemics for the chosen continent
             pandemic_list = ["Select a Pandemic..."] + sorted(
                 map_df[map_df["Continent"] == selected_continent]["Disease"].unique().tolist()
             )
@@ -180,26 +176,24 @@ def render_data():
         st.subheader("≡ƒù║∩╕Å Pandemic Map")
 
         # --- Set Map's Initial View ---
-        # Default to a world view
         map_center = [20, 0]
         zoom_level = 2
         
-        # If a specific pandemic is selected, change the map's view to focus on it
+        # If a pandemic is selected, find its data to center the map
         if selected_pandemic_name and selected_pandemic_name != "Select a Pandemic...":
-            # Get the coordinates of the selected pandemic
-            pandemic_data = map_df[map_df["Disease"] == selected_pandemic_name].iloc[0]
-            map_center = [pandemic_data["Latitude"], pandemic_data["Longitude"]]
-            zoom_level = 5
+            pandemic_rows = map_df[map_df["Disease"] == selected_pandemic_name]
+            if not pandemic_rows.empty:
+                # Center on the average location for that pandemic
+                map_center = [pandemic_rows["Latitude"].mean(), pandemic_rows["Longitude"].mean()]
+                zoom_level = 4
 
-        # Create the Folium map object
         m = folium.Map(
             location=map_center,
             zoom_start=zoom_level,
             control_scale=True
         )
 
-        # --- Add Continent Layer with Hover Tooltip ---
-        # This layer is always on the map
+        # --- Add Continent Layer with Hover Tooltip (Always Visible) ---
         folium.GeoJson(
             geojson_path,
             name="continents",
@@ -207,29 +201,34 @@ def render_data():
                 "fillColor": "#1DB954",
                 "color": "black",
                 "weight": 1,
-                "fillOpacity": 0.1, # Subtle fill
+                "fillOpacity": 0.1,
             },
-            # This tooltip provides the hover interaction you wanted
             tooltip=folium.GeoJsonTooltip(
                 fields=["CONTINENT"], 
-                aliases=[""], # This removes the "CONTINENT:" prefix from the tooltip
+                aliases=[""],
                 style=("background-color: #333; color: white; font-family: sans-serif; font-size: 12px; padding: 5px;")
             )
         ).add_to(m)
 
-        # --- Add a Marker if a Pandemic is Selected ---
+        # --- If a Pandemic is Selected, Add a HeatMap ---
         if selected_pandemic_name and selected_pandemic_name != "Select a Pandemic...":
-            pandemic_data = map_df[map_df["Disease"] == selected_pandemic_name].iloc[0]
-            folium.Marker(
-                location=[pandemic_data["Latitude"], pandemic_data["Longitude"]],
-                popup=f"<strong>{pandemic_data['Disease']}</strong> ({pandemic_data['Year']})",
-                icon=folium.Icon(color="red", icon="info-sign"),
-            ).add_to(m)
+            from folium.plugins import HeatMap
+            
+            pandemic_rows = map_df[map_df["Disease"] == selected_pandemic_name]
+            
+            if not pandemic_rows.empty:
+                # Create a list of [lat, lon] for the heatmap
+                heat_data = pandemic_rows[["Latitude", "Longitude"]].values.tolist()
+                
+                # Add the heatmap layer to the map
+                HeatMap(heat_data, radius=25, blur=15).add_to(m)
+            else:
+                st.warning(f"No location data found for {selected_pandemic_name}")
 
         # --- Render the Final Map in Streamlit ---
         st_folium(m, key="main_map", width=800, height=500)
 
-    # --- Insights Section (remains below the columns) ---
+    # --- Insights Section ---
     st.markdown("---")
     st.subheader("Insights")
     st.write(
@@ -240,7 +239,6 @@ def render_data():
         visualize this geographic distribution over time.
         """
     )
-
 
 def render_about():
     st.title("About Me")
