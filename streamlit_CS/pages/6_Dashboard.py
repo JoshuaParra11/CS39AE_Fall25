@@ -165,7 +165,7 @@ def render_data():
 
     # --- Left Column: Map ---
     with map_col:
-        st.subheader("≡ƒù║∩╕Å Pandemic Map")
+        st.subheader("Pandemic Map")
 
         map_center = [20, 0]
         zoom_level = 2
@@ -203,7 +203,6 @@ def render_data():
                 HeatMap(heat_data, radius=25, blur=15).add_to(m)
 
                 for _, row in pandemic_rows.iterrows():
-                    # *** FIX: Added a div with min-width to the popup HTML ***
                     popup_html = f"""
                     <div style="min-width: 200px;">
                         <b>Location:</b> {row['Location']}<br>
@@ -225,13 +224,24 @@ def render_data():
     # --- Insights Section ---
     st.markdown("---")
     st.subheader("Insights")
-    st.write(
-        """
-        Select a pandemic from the dropdown to see its geographic spread. The heatmap shows the
-        density of recorded occurrences, while the red markers pinpoint specific locations with
-        available data.
-        """
-    )
+    
+    if selected_disease and selected_disease != "Select a Pandemic...":
+        st.markdown(f"**{selected_disease}** affected:")
+        pandemic_rows = map_df[map_df["Disease"] == selected_disease]
+        for _, row in pandemic_rows.iterrows():
+            st.markdown(
+                f"- **Location:** {row['Location']}<br>"
+                f"  **Time:** {row['Date']}<br>"
+                f"  **Deaths:** {row['Death toll (estimate)']}"
+            )
+    else:
+        st.write(
+            """
+            Select a pandemic from the dropdown to see its geographic spread. The heatmap shows the
+            density of recorded occurrences, while the red markers pinpoint specific locations with
+            available data.
+            """
+        )
 
 def render_about():
     st.title("About Me")
