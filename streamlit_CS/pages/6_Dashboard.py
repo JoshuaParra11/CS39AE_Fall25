@@ -13,6 +13,9 @@ st.set_page_config(page_title="Dashboard", layout="wide")
 data_path = os.path.join(os.path.dirname(__file__), "..", "data", "PandemicChronoTable.csv")
 df = pd.read_csv(data_path)
 
+# Normalize continent names for consistent matching
+df["Continent"] = df["Continent"].str.strip().str.title()
+
 # --- Session State ---
 if "sidebar_open" not in st.session_state:
     st.session_state.sidebar_open = True
@@ -195,7 +198,7 @@ def render_data():
                 world_copy_jump=False,
             )
 
-            # Add GeoJSON with style and zoom animation
+            # Add continent GeoJSON with highlight
             continents_layer = folium.GeoJson(
                 geojson_path,
                 name="continents",
@@ -205,22 +208,42 @@ def render_data():
                     "weight": 1,
                     "fillOpacity": 0.3,
                 },
+                highlight_function=lambda x: {"weight": 2, "fillOpacity": 0.5},
             )
             continents_layer.add_to(m)
 
-            # Focus map to the continent area
+            # --- Focus map on the selected continent ---
             try:
-                import geopandas as gpd
                 gdf = gpd.read_file(geojson_path)
-                bounds = gdf[gdf["CONTINENT"] == continent].total_bounds  # [minx, miny, maxx, maxy]
+                bounds = gdf[gdf["CONTINENT"] == continent].total_bounds
                 m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
             except Exception as e:
                 st.warning(f"Could not auto-zoom to continent: {e}")
 
+            # --- Add popup inside map with pandemic options ---
+            continent_pandemics = map_df[map_df["Continent"] == continent]
+
+            if not continent_pandemics.empty:
+                options_html = "<b>Select a pandemic:</b><br>"
+                for _, row in continent_pandemics.iterrows():
+                    label = f"{row['Disease']} ({row['Year']})"
+                    options_html += f"{label}<br>"
+
+                popup = folium.Popup(options_html, max_width=250)
+                folium.Marker(
+                    [continent_pandemics["Latitude"].mean(), continent_pandemics["Longitude"].mean()],
+                    icon=folium.Icon(color="green", icon="info-sign"),
+                    popup=popup,
+                ).add_to(m)
+            else:
+                st.info(f"No pandemic data available for {continent}.")
+
+            # --- Back Button ---
             if st.button("← Back to World View"):
                 st.session_state.selected_continent = None
                 st.rerun()
 
+            # --- Display map ---
             st_folium(m, key="continent_view", width=700, height=450)
 
         # --- Else: Default world map view ---
@@ -249,7 +272,7 @@ def render_data():
             map_output = st_folium(m, key="world_map", width=700, height=450)
 
             if map_output and map_output.get("last_object_clicked_tooltip"):
-                clicked_continent = map_output["last_object_clicked_tooltip"]
+                clicked_continent = map_output["last_object_clicked_tooltip"].replace("Continent: ", "").strip().title()
                 st.session_state.selected_continent = clicked_continent
                 st.rerun()
 
@@ -257,30 +280,19 @@ def render_data():
     with details_col:
         st.subheader("📋 Details & Stats")
 
-        # If a continent is selected but not a pandemic
-        if st.session_state.selected_continent and not st.session_state.selected_pandemic:
-            continent = st.session_state.selected_continent
-            continent_pandemics = map_df[map_df["Continent"] == continent].reset_index()
-
-            if not continent_pandemics.empty:
-                pandemic_options = [
-                    f"{row['Disease']} ({row['Year']})" for _, row in continent_pandemics.iterrows()
-                ]
-                selected_option = st.selectbox(
-                    "Select a pandemic:",
-                    options=pandemic_options,
-                    index=None,
-                    placeholder="Choose an event..."
-                )
-                if selected_option:
-                    st.session_state.selected_pandemic = selected_option
-                    st.rerun()
-            else:
-                st.info(f"No pandemic data available for {continent}.")
-        elif not st.session_state.selected_continent:
+        # --- When no continent is selected ---
+        if not st.session_state.selected_continent:
             st.info("Click a continent on the map to see pandemics in that region.")
+
+        # --- When a continent is selected but no pandemic yet ---
+        elif st.session_state.selected_continent and not st.session_state.selected_pandemic:
+            continent = st.session_state.selected_continent
+            st.markdown(f"**Selected Continent:** {continent}")
+            st.write("Pandemic options are now shown directly inside the map (popup).")
+
+        # --- When a specific pandemic is selected ---
         elif st.session_state.selected_pandemic:
-            st.success(f"Currently viewing: {st.session_state.selected_pandemic}")
+            st.success(f"Currently viewing heatmap for: {st.session_state.selected_pandemic}")
 
         st.markdown("---")
         st.markdown("*(Future: summary stats & visuals go here)*")
