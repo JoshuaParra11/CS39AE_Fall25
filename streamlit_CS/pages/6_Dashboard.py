@@ -132,6 +132,11 @@ def render_home():
     st.title("Pandemics Through History")
     st.write("Welcome to the Pandemic Dashboard. Explore data and insights about pandemics through history.")
 
+Here is the updated `render_data` function again, with the change to use the local `continents.geojson` file.
+
+Please replace the `render_data` function in your `pages/6_Dashboard.py` file with this code:
+
+```python
 def render_data():
     st.title("Data Overview")
 
@@ -145,7 +150,8 @@ def render_data():
     map_col, details_col = st.columns([2, 1])
 
     # --- Data for the Map ---
-    geojson_url = "https://raw.githubusercontent.com/johan/world.geo.json/master/continents.json"
+    # THIS LINE IS CHANGED to use the local file
+    geojson_path = os.path.join(os.path.dirname(__file__), "..", "data", "continents.geojson")
     map_df = df.dropna(subset=['Latitude', 'Longitude', 'Continent'])
 
     # --- Back Button Logic ---
@@ -177,7 +183,7 @@ def render_data():
         else:
             m = folium.Map(location=[20, 0], zoom_start=2)
             folium.GeoJson(
-                geojson_url,
+                geojson_path, # THIS LINE IS CHANGED
                 name='continents',
                 style_function=lambda feature: {
                     'fillColor': '#1DB954',
