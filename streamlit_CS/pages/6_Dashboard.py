@@ -165,7 +165,8 @@ def render_data():
 
     # --- Left Column: Map ---
     with map_col:
-        st.subheader("≡ƒù║∩╕Å Pandemic Map")
+        # *** CHANGE: Removed emoji from subheader ***
+        st.subheader("Pandemic Map")
 
         map_center = [20, 0]
         zoom_level = 2
@@ -203,7 +204,6 @@ def render_data():
                 HeatMap(heat_data, radius=25, blur=15).add_to(m)
 
                 for _, row in pandemic_rows.iterrows():
-                    # *** FIX: Added a div with min-width to the popup HTML ***
                     popup_html = f"""
                     <div style="min-width: 200px;">
                         <b>Location:</b> {row['Location']}<br>
@@ -225,19 +225,49 @@ def render_data():
     # --- Insights Section ---
     st.markdown("---")
     st.subheader("Insights")
-    st.write(
-        """
-        Select a pandemic from the dropdown to see its geographic spread. The heatmap shows the
-        density of recorded occurrences, while the red markers pinpoint specific locations with
-        available data.
-        """
-    )
+    
+    # *** CHANGE: Dynamic insights based on selected pandemic ***
+    if selected_disease and selected_disease != "Select a Pandemic...":
+        st.markdown(f"**{selected_disease}** affected:")
+        pandemic_rows = map_df[map_df["Disease"] == selected_disease]
+        for _, row in pandemic_rows.iterrows():
+            st.markdown(
+                f"- **Location:** {row['Location']}<br>"
+                f"  **Time:** {row['Date']}<br>"
+                f"  **Deaths:** {row['Death toll (estimate)']}"
+            )
+    else:
+        st.write(
+            """
+            Select a pandemic from the dropdown to see its geographic spread. The heatmap shows the
+            density of recorded occurrences, while the red markers pinpoint specific locations with
+            available data.
+            """
+        )
 
 def render_about():
     st.title("About Me")
     st.write("This dashboard was created to visualize pandemics data using Streamlit and Python.")
 
+# --- Page Renderers (Ensuring no emojis in top bar buttons) ---
+# This part is outside render_data, but needs to be updated for the no-emoji rule.
+# I'll provide the full section for clarity.
+# You should replace the existing 'with st.container():' block and the 'page_renderer' dictionary.
 
+# --- Top Bar (Updated for no emojis) ---
+with st.container():
+    col1, col2, col3 = st.columns([1, 5, 1])
+    with col1:
+        # *** CHANGE: Removed emojis from sidebar toggle button ***
+        icon = "Back" if st.session_state.sidebar_open else "Menu"
+        st.button(icon, on_click=toggle_sidebar, key="sidebar_btn")
+    with col2:
+        st.markdown(f"<div class='top-bar-center'>{st.session_state.page}</div>", unsafe_allow_html=True)
+    with col3:
+        st.write("")
+
+
+# --- Page Renderers (No changes needed here, just including for context) ---
 page_renderer = {
     "Home": render_home,
     "Data": render_data,
