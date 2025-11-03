@@ -1,3 +1,4 @@
+import plotly.graph_objects as go
 import streamlit as st
 import pandas as pd
 from streamlit_folium import st_folium
@@ -157,15 +158,52 @@ def render_data():
     with details_col:
         st.subheader("Filters")
         
-        # *** CHANGE: Reverted to original st.selectbox, taking default width ***
         selected_disease = st.selectbox(
             "Choose a pandemic to display:",
             options=disease_list,
             key="disease_selector"
         )
         
-        st.markdown("---") # Keep the divider line
-        st.write("(Other visuals will go here)") # Placeholder for next visual
+        st.markdown("---")
+
+        # --- NEW: KPI Gauge Chart ---
+        st.subheader("Impact Gauge")
+
+        if selected_disease and selected_disease != "Select a Pandemic...":
+            # Calculate total deaths for the selected disease
+            pandemic_rows = map_df[map_df["Disease"] == selected_disease]
+            total_deaths = pandemic_rows["Death Toll (est)"].sum()
+
+            # Current world population approximation
+            world_population = 8_100_000_000
+
+            # Calculate the percentage
+            percentage_of_world = (total_deaths / world_population) * 100 if world_population > 0 else 0
+
+            # Create the gauge chart using Plotly
+            fig = px.bar() # Using px.bar() as a placeholder for creating a Plotly figure object
+            fig.add_trace(
+                go.Indicator(
+                    mode="gauge+number",
+                    value=percentage_of_world,
+                    title={'text': f"% of Current World Population"},
+                    gauge={
+                        'axis': {'range': [None, 0.1], 'tickwidth': 1, 'tickcolor': "darkblue"}, # Range up to 0.1%
+                        'bar': {'color': "darkblue"},
+                        'steps': [
+                            {'range': [0, 0.01], 'color': 'lightgray'},
+                            {'range': [0.01, 0.05], 'color': 'gray'}
+                        ],
+                    }
+                )
+            )
+            fig.update_layout(
+                height=250, 
+                margin=dict(l=20, r=20, t=50, b=20)
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Select a pandemic to see its impact relative to the current world population.")
 
 
     # --- Left Column: Map ---
