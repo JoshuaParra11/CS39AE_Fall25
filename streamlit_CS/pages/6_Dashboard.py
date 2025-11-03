@@ -145,18 +145,8 @@ def render_data():
     # --- Data Prep ---
     geojson_path = os.path.join(os.path.dirname(__file__), "..", "data", "continents.geojson")
     
-    # *** FIX: Ensure we are using the correct column names from the CSV ***
-    # The error indicates 'Year' might not be the exact name. Let's be safe.
-    # We will check for columns that are essential for the app to run.
-    required_cols = ["Latitude", "Longitude", "Continent", "Disease", "Death toll (estimate)"]
-    # The 'Year' column seems to be the issue, let's find its correct name or handle its absence.
-    # A common issue is extra spaces or different casing. Let's assume it's 'Year' for now and correct if needed.
-    if 'Year' not in df.columns:
-        # This is a fallback if 'Year' is not found. We'll try to find a similar column.
-        # For now, we'll proceed without it in the dropna to avoid the crash.
-        required_cols_for_dropna = ["Latitude", "Longitude", "Continent", "Disease"]
-    else:
-        required_cols_for_dropna = ["Latitude", "Longitude", "Continent", "Year", "Disease"]
+    # *** FIX: Use 'Date' column instead of 'Year' for dropna and display ***
+    required_cols_for_dropna = ["Latitude", "Longitude", "Continent", "Date", "Disease", "Death toll (estimate)"]
 
     map_df = df[(df["Latitude"] != 0) & (df["Longitude"] != 0)].dropna(
         subset=required_cols_for_dropna
@@ -214,11 +204,10 @@ def render_data():
                 HeatMap(heat_data, radius=25, blur=15).add_to(m)
 
                 for _, row in pandemic_rows.iterrows():
-                    # *** FIX: Safely access the 'Year' column for the popup ***
-                    year_info = row.get('Year', 'N/A') # Use .get() for safety
+                    # *** FIX: Use 'Date' column and label it 'Time' ***
                     popup_html = f"""
                     <b>Location:</b> {row['Location']}<br>
-                    <b>Year:</b> {year_info}<br>
+                    <b>Time:</b> {row['Date']}<br>
                     <b>Deaths:</b> {row['Death toll (estimate)']}
                     """
                     folium.Marker(
