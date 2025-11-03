@@ -166,44 +166,44 @@ def render_data():
         
         st.markdown("---")
 
-        # --- NEW: KPI Gauge Chart ---
-        st.subheader("Impact Gauge")
+        # --- KPI Visuals ---
+        st.subheader("Impact Analysis")
 
         if selected_disease and selected_disease != "Select a Pandemic...":
-            # Calculate total deaths for the selected disease
             pandemic_rows = map_df[map_df["Disease"] == selected_disease]
             total_deaths = pandemic_rows["Death Toll (est)"].sum()
-
-            # Current world population approximation
             world_population = 8_100_000_000
-
-            # Calculate the percentage
             percentage_of_world = (total_deaths / world_population) * 100 if world_population > 0 else 0
 
-            # Create the gauge chart using Plotly
-            fig = px.bar() # Using px.bar() as a placeholder for creating a Plotly figure object
-            fig.add_trace(
-                go.Indicator(
-                    mode="gauge+number",
-                    value=percentage_of_world,
-                    title={'text': f"% of Current World Population"},
-                    gauge={
-                        'axis': {'range': [None, 0.1], 'tickwidth': 1, 'tickcolor': "darkblue"}, # Range up to 0.1%
-                        'bar': {'color': "darkblue"},
-                        'steps': [
-                            {'range': [0, 0.01], 'color': 'lightgray'},
-                            {'range': [0.01, 0.05], 'color': 'gray'}
-                        ],
-                    }
-                )
-            )
+            # --- CHANGE 1: Display Total Deaths with st.metric ---
+            st.metric(label="Total Estimated Deaths", value=f"{int(total_deaths):,}")
+
+            # --- CHANGE 2: Create a cleaner "bullet gauge" chart ---
+            fig = go.Figure(go.Indicator(
+                mode = "gauge+number",
+                value = percentage_of_world,
+                title = {'text': "% of Current World Population", 'font': {'size': 16}},
+                number = {'suffix': "%", 'font': {'size': 20}},
+                gauge = {
+                    'axis': {'range': [None, 0.1], 'visible': False}, # Hide the gauge axis line
+                    'shape': "bullet",
+                    'bar': {'color': "red", 'thickness': 0.5}, # The "filled" part
+                    'bgcolor': "#E0E0E0", # The "unfilled" part
+                }
+            ))
+            
+            # --- CHANGE 3: Remove the plot background and axes ---
             fig.update_layout(
-                height=250, 
-                margin=dict(l=20, r=20, t=50, b=20)
+                height=100, 
+                margin=dict(l=10, r=10, t=40, b=10),
+                plot_bgcolor='rgba(0,0,0,0)', # Transparent background
+                paper_bgcolor='rgba(0,0,0,0)'
             )
+            
             st.plotly_chart(fig, use_container_width=True)
+
         else:
-            st.info("Select a pandemic to see its impact relative to the current world population.")
+            st.info("Select a pandemic to see its impact analysis.")
 
 
     # --- Left Column: Map ---
