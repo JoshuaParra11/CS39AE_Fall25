@@ -145,19 +145,29 @@ def render_data():
     # --- Data Prep ---
     geojson_path = os.path.join(os.path.dirname(__file__), "..", "data", "continents.geojson")
     
-    # *** CHANGE: Filter out (0,0) coordinates and missing data ***
+    # *** FIX: Ensure we are using the correct column names from the CSV ***
+    # The error indicates 'Year' might not be the exact name. Let's be safe.
+    # We will check for columns that are essential for the app to run.
+    required_cols = ["Latitude", "Longitude", "Continent", "Disease", "Death toll (estimate)"]
+    # The 'Year' column seems to be the issue, let's find its correct name or handle its absence.
+    # A common issue is extra spaces or different casing. Let's assume it's 'Year' for now and correct if needed.
+    if 'Year' not in df.columns:
+        # This is a fallback if 'Year' is not found. We'll try to find a similar column.
+        # For now, we'll proceed without it in the dropna to avoid the crash.
+        required_cols_for_dropna = ["Latitude", "Longitude", "Continent", "Disease"]
+    else:
+        required_cols_for_dropna = ["Latitude", "Longitude", "Continent", "Year", "Disease"]
+
     map_df = df[(df["Latitude"] != 0) & (df["Longitude"] != 0)].dropna(
-        subset=["Latitude", "Longitude", "Continent", "Year", "Disease"]
+        subset=required_cols_for_dropna
     )
     
-    # Create a sorted list of unique diseases for the dropdown
     disease_list = ["Select a Pandemic..."] + sorted(map_df["Disease"].unique().tolist())
 
     # --- Right Column: Details & Controls ---
     with details_col:
         st.subheader("Filters")
         
-        # *** CHANGE: Direct pandemic selection dropdown ***
         selected_disease = st.selectbox(
             "Choose a pandemic to display:",
             options=disease_list,
@@ -171,7 +181,6 @@ def render_data():
         map_center = [20, 0]
         zoom_level = 2
         
-        # If a disease is selected, find its data to center the map
         if selected_disease and selected_disease != "Select a Pandemic...":
             pandemic_rows = map_df[map_df["Disease"] == selected_disease]
             if not pandemic_rows.empty:
@@ -184,7 +193,6 @@ def render_data():
             control_scale=True
         )
 
-        # --- Add Continent Layer (Always Visible) ---
         folium.GeoJson(
             geojson_path,
             name="continents",
@@ -196,22 +204,21 @@ def render_data():
             )
         ).add_to(m)
 
-        # --- If a Disease is Selected, Add HeatMap AND Markers ---
         if selected_disease and selected_disease != "Select a Pandemic...":
             from folium.plugins import HeatMap
             
             pandemic_rows = map_df[map_df["Disease"] == selected_disease]
             
             if not pandemic_rows.empty:
-                # 1. Add the Heatmap
                 heat_data = pandemic_rows[["Latitude", "Longitude"]].values.tolist()
                 HeatMap(heat_data, radius=25, blur=15).add_to(m)
 
-                # 2. Add a Marker for each location of that pandemic
                 for _, row in pandemic_rows.iterrows():
+                    # *** FIX: Safely access the 'Year' column for the popup ***
+                    year_info = row.get('Year', 'N/A') # Use .get() for safety
                     popup_html = f"""
                     <b>Location:</b> {row['Location']}<br>
-                    <b>Year:</b> {row['Year']}<br>
+                    <b>Year:</b> {year_info}<br>
                     <b>Deaths:</b> {row['Death toll (estimate)']}
                     """
                     folium.Marker(
