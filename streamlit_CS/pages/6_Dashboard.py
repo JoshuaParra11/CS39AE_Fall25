@@ -157,11 +157,22 @@ def render_data():
     with details_col:
         st.subheader("Filters")
         
-        selected_disease = st.selectbox(
-            "Choose a pandemic to display:",
-            options=disease_list,
-            key="disease_selector"
-        )
+        # *** CHANGE: Using columns to control the width of the selectbox ***
+        # This makes the dropdown menu (the "button") smaller.
+        col1, col2 = st.columns([3, 1]) # Give the selectbox 3/4 of the column width
+        with col1:
+            selected_disease = st.selectbox(
+                "Choose a pandemic to display:",
+                options=disease_list,
+                key="disease_selector"
+            )
+        
+        # *** CHANGE: Add a divider line below the filter control ***
+        st.markdown("---")
+
+        # Placeholder for your other visuals
+        st.write("(Other visuals will go here)")
+
 
     # --- Left Column: Map ---
     with map_col:
