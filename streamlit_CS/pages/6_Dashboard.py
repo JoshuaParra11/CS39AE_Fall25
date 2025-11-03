@@ -132,11 +132,6 @@ def render_home():
     st.title("Pandemics Through History")
     st.write("Welcome to the Pandemic Dashboard. Explore data and insights about pandemics through history.")
 
-Here is the updated `render_data` function again, with the change to use the local `continents.geojson` file.
-
-Please replace the `render_data` function in your `pages/6_Dashboard.py` file with this code:
-
-```python
 def render_data():
     st.title("Data Overview")
 
