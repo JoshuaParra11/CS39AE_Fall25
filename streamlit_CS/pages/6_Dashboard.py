@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from streamlit_folium import st_folium
+import geopandas as gpd
 import folium
 import plotly.express as px
 import os
@@ -150,7 +151,7 @@ def render_data():
 
     # --- MAP COLUMN ---
     with map_col:
-        st.subheader("🌍 Interactive Map")
+        st.subheader("Interactive Map")
 
         # --- If pandemic selected → Show Heatmap ---
         if st.session_state.selected_pandemic:
@@ -185,7 +186,6 @@ def render_data():
         # --- Else if continent selected → Show its pandemics list ---
         elif st.session_state.selected_continent:
             continent = st.session_state.selected_continent
-            st.write(f"**Selected Continent:** {continent}")
 
             m = folium.Map(
                 location=[20, 0],
