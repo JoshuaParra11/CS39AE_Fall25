@@ -173,7 +173,7 @@ def render_data():
 
     # --- Left Column: Map ---
     with map_col:
-        st.subheader("≡ƒù║∩╕Å Pandemic Map")
+        st.subheader("Pandemic Map")
 
         # --- Set Map's Initial View ---
         map_center = [20, 0]

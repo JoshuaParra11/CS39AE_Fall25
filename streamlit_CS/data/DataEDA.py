@@ -4,368 +4,168 @@ import re
 import os
 
 # Load Data
-data_path = os.path.join(os.path.dirname(__file__), "..", "data", "PandemicChronoTable.csv")
+# Correctly construct the path relative to this script file
+data_path = os.path.join(os.path.dirname(__file__), "PandemicChronoTable.csv")
 df = pd.read_csv(data_path)
 
-print(df.columns)
-print(df.head(10))
-print(df.info)
+# --- DATA CLEANING ---
 
-# Drop useless columns
-df.drop(columns=['Unnamed: 0', 'Ref.'], errors='ignore')
+# Drop useless columns if they exist
+df.drop(columns=['Unnamed: 0', 'Ref.'], inplace=True, errors='ignore')
 
 # Separate unknown disease events
 df["Disease_Known"] = ~df["Disease"].str.contains("unknown", case=False, na=False)
 
-# Show unique location values (for known diseases only)
-known_df = df[df["Disease_Known"]]
-
-unique_locations = known_df["Location"].dropna().unique()
-# print(f"\nTotal unique locations (known diseases): {len(unique_locations)}\n")
-# print(sorted(unique_locations))
-
-# --- Continent Mapping ---
+# --- CONTINENT MAPPING ---
+# This mapping helps group locations into continents.
 continent_map = {
-    # 🌍 Africa
-    "Angola": "Africa",
-    "Angola and Democratic Republic of the Congo": "Africa",
-    "Byzantine Empire, West Asia, Africa": "Africa",
-    "Byzantine Empire, West Asia, Syria, Mesopotamia": "Asia",
-    "Chad": "Africa",
-    "Congo Basin": "Africa",
-    "Darfur, Sudan": "Africa",
-    "Democratic Republic of the Congo": "Africa",
-    "Democratic Republic of the Congo and Uganda": "Africa",
-    "East Africa": "Africa",
-    "Ethiopia": "Africa",
-    "Ituri Province, Democratic Republic of the Congo": "Africa",
-    "Madagascar": "Africa",
-    "Mali": "Africa",
-    "Nigeria": "Africa",
-    "Oju, Nigeria": "Africa",
-    "South Africa": "Africa",
-    "Sudan": "Africa",
-    "Uganda": "Africa",
-    "West Africa": "Africa",
-    "Western Sahara": "Africa",
+    # Africa
+    "Angola": "Africa", "Angola and Democratic Republic of the Congo": "Africa",
+    "Chad": "Africa", "Congo Basin": "Africa", "Darfur, Sudan": "Africa",
+    "Democratic Republic of the Congo": "Africa", "Democratic Republic of the Congo and Uganda": "Africa",
+    "East Africa": "Africa", "Ethiopia": "Africa", "Ituri Province, Democratic Republic of the Congo": "Africa",
+    "Madagascar": "Africa", "Mali": "Africa", "Nigeria": "Africa", "Oju, Nigeria": "Africa",
+    "South Africa": "Africa", "Sudan": "Africa", "Uganda": "Africa", "West Africa": "Africa",
+    "Western Sahara": "Africa", "Greece, Libya, Egypt, Ethiopia": "Africa",
 
-    # 🌎 North America
-    "Boston, Massachusetts Bay Colony, British North America": "North America",
-    "British North America": "North America",
-    "Canada": "North America",
-    "Charleston, British North America": "North America",
-    "Charleston and Philadelphia, British North America": "North America",
-    "Flint, Michigan, United States": "North America",
-    "Great Plains, United States and Canada": "North America",
-    "Massachusetts Bay Colony": "North America",
-    "Massachusetts Bay Colony, British North America": "North America",
-    "Massachusetts Bay Colony, Thirteen Colonies": "North America",
-    "Minnesota, United States": "North America",
-    "Mississippi Valley, United States": "North America",
-    "Montreal, Canada": "North America",
-    "New France, Canada": "North America",
-    "New Orleans, United States": "North America",
-    "New York City, British North America": "North America",
-    "North America": "North America",
-    "Pacific Northwest, United States": "North America",
-    "Philadelphia, United States": "North America",
-    "Province of Carolina, Thirteen Colonies": "North America",
-    "Southern United States (especially Louisiana and Florida)": "North America",
-    "Southern United States (especially New Orleans)": "North America",
-    "Thirteen Colonies": "North America",
-    "Thirteen Colonies and New France, Canada": "North America",
-    "United States": "North America",
-    "Wyandot people, North America": "North America",
+    # North America
+    "Boston, Massachusetts Bay Colony, British North America": "North America", "British North America": "North America",
+    "Canada": "North America", "Charleston, British North America": "North America",
+    "Charleston and Philadelphia, British North America": "North America", "Flint, Michigan, United States": "North America",
+    "Great Plains, United States and Canada": "North America", "Massachusetts Bay Colony": "North America",
+    "Massachusetts Bay Colony, British North America": "North America", "Massachusetts Bay Colony, Thirteen Colonies": "North America",
+    "Minnesota, United States": "North America", "Mississippi Valley, United States": "North America",
+    "Montreal, Canada": "North America", "New France, Canada": "North America", "New Orleans, United States": "North America",
+    "New York City, British North America": "North America", "North America": "North America",
+    "Pacific Northwest, United States": "North America", "Philadelphia, United States": "North America",
+    "Province of Carolina, Thirteen Colonies": "North America", "Southern United States (especially Louisiana and Florida)": "North America",
+    "Southern United States (especially New Orleans)": "North America", "Thirteen Colonies": "North America",
+    "Thirteen Colonies and New France, Canada": "North America", "United States": "North America",
+    "Wyandot people, North America": "North America", "Puerto Rico, Dominican Republic, Mexico": "North America",
+    "Southern New England, British North America, especially the Wampanoag people": "North America",
 
-    # 🌎 South America
-    "Americas": "South America",
-    "Argentina": "South America",
-    "Bolivia": "South America",
-    "Brazil": "South America",
-    "Buenos Aires, Argentina": "South America",
-    "Cartagena, Colombia": "South America",
-    "Central America": "South America",
-    "Chile": "South America",
-    "Colombia": "South America",
-    "Montevideo, Uruguay": "South America",
-    "Peru, Chile, Bolivia, Ecuador, Colombia, Mexico, El Salvador, Guatemala": "South America",
-    "Puerto Rico, Dominican Republic, Mexico": "North America",  # Caribbean/North border
-    "South America": "South America",
+    # South America
+    "Americas": "South America", "Argentina": "South America", "Bolivia": "South America", "Brazil": "South America",
+    "Buenos Aires, Argentina": "South America", "Cartagena, Colombia": "South America", "Central America": "South America",
+    "Chile": "South America", "Colombia": "South America", "Montevideo, Uruguay": "South America",
+    "Peru, Chile, Bolivia, Ecuador, Colombia, Mexico, El Salvador, Guatemala": "South America", "South America": "South America",
 
-    # 🌏 Asia
-    "Asia": "Asia",
-    "Bangladesh": "Asia",
-    "Bombay, India": "Asia",
-    "Cambodia": "Asia",
-    "China": "Asia",
-    "China, Southeast Asia and Egypt": "Asia",
-    "Hong Kong": "Asia",
-    "India": "Asia",
-    "Indonesia": "Asia",
-    "Iran": "Asia",
-    "Iraq": "Asia",
-    "Japan": "Asia",
-    "Kuala Koh, Malaysia": "Asia",
-    "Malaysia": "Asia",
-    "Pakistan": "Asia",
-    "Persia": "Asia",
-    "Peshawar, Pakistan": "Asia",
-    "Philippines": "Asia",
-    "Singapore": "Asia",
-    "Sri Lanka": "Asia",
-    "Vietnam": "Asia",
-    "Yemen": "Asia",
-    "Middle East": "Asia",
-    "Megiddo, land of Canaan": "Asia",  # modern Israel/Levant region
+    # Asia
+    "Asia": "Asia", "Bangladesh": "Asia", "Bombay, India": "Asia", "Cambodia": "Asia", "China": "Asia",
+    "China, Southeast Asia and Egypt": "Asia", "Hong Kong": "Asia", "India": "Asia", "Indonesia": "Asia",
+    "Iran": "Asia", "Iraq": "Asia", "Japan": "Asia", "Kuala Koh, Malaysia": "Asia", "Malaysia": "Asia",
+    "Pakistan": "Asia", "Persia": "Asia", "Peshawar, Pakistan": "Asia", "Philippines": "Asia",
 
-    # 🌍 Europe
-    "Amsterdam, Netherlands": "Europe",
-    "Augsburg, Germany": "Europe",
-    "Barcelona, Spain": "Europe",
-    "British Isles": "Europe",
-    "Cádiz, Spain": "Europe",
-    "Copenhagen, Denmark": "Europe",
-    "Croydon, United Kingdom": "Europe",
-    "Denmark, Sweden, Lithuania": "Europe",
-    "England": "Europe",
-    "Europe": "Europe",
-    "France": "Europe",
-    "Iceland": "Europe",
-    "Ireland": "Europe",
-    "Italy": "Europe",
-    "Lisbon, Portugal": "Europe",
-    "London, England": "Europe",
-    "London and Westminster, England": "Europe",
-    "Malta": "Europe",
-    "Messina, Sicily, Italy": "Europe",
-    "Netherlands": "Europe",
-    "Norfolk and Portsmouth, England": "Europe",
-    "Portugal": "Europe",
-    "Prague, Czech Kingdom": "Europe",
-    "Romania": "Europe",
-    "Rome, Byzantine Empire": "Europe",
-    "Russia": "Europe",
-    "Spain": "Europe",
-    "Staphorst, Netherlands": "Europe",
-    "Tenerife, Spain": "Europe",
-    "United Kingdom": "Europe",
-    "Vienna, Austria": "Europe",
-    "Yugoslavia": "Europe",
+    "Singapore": "Asia", "Sri Lanka": "Asia", "Vietnam": "Asia", "Yemen": "Asia", "Middle East": "Asia",
+    "Megiddo, land of Canaan": "Asia", "Byzantine Empire, West Asia, Syria, Mesopotamia": "Asia",
+    "Bilad al-Sham": "Asia", "Han Dynasty": "Asia",
 
-    # 🌏 Oceania
-    "Australia": "Oceania",
-    "Fiji": "Oceania",
-    "Fremantle, Western Australia": "Oceania",
-    "Hawaiian Kingdom": "Oceania",
-    "New South Wales, Australia": "Oceania",
-    "New Zealand": "Oceania",
-    "Papua New Guinea": "Oceania",
-    "Queensland, Australia": "Oceania",
-    "Samoa": "Oceania",
-    "Sydney, Australia": "Oceania",
-    "Victoria, Australia": "Oceania",
-
-    # 🌐 Multi-region / Global
-    "Asia, Africa, Europe, South America": "Multiple",
-    "Asia, Africa, Europe, and Americas": "Multiple",
-    "Asia, Europe": "Multiple",
-    "Asia, Europe, North America": "Multiple",
-    "Asia, North Africa, Europe": "Multiple",
-    "Asia-Pacific, Latin America": "Multiple",
-    "Byzantine Empire": "Multiple",
-    "Eurasia and North Africa": "Multiple",
-    "Europe and West Asia": "Multiple",
-    "Europe, Asia, Africa": "Multiple",
-    "Europe, North America, South America": "Multiple",
-    "Ottoman Empire": "Multiple",
-    "Ottoman Empire, Egypt": "Multiple",
-    "Worldwide": "Global",
-    "Worldwide, primarily concentrated in Guinea, Liberia, Sierra Leone": "Global",
-    "Bilad al-Sham": "Asia",  # roughly Syria/Levant
+    # Europe
+    "Amsterdam, Netherlands": "Europe", "Augsburg, Germany": "Europe", "Barcelona, Spain": "Europe",
+    "British Isles": "Europe", "C├ídiz, Spain": "Europe", "Copenhagen, Denmark": "Europe",
+    "Croydon, United Kingdom": "Europe", "Denmark, Sweden, Lithuania": "Europe", "England": "Europe",
+    "Europe": "Europe", "France": "Europe", "Iceland": "Europe", "Ireland": "Europe", "Italy": "Europe",
+    "Lisbon, Portugal": "Europe", "London, England": "Europe", "London and Westminster, England": "Europe",
+    "Malta": "Europe", "Messina, Sicily, Italy": "Europe", "Netherlands": "Europe",
+    "Norfolk and Portsmouth, England": "Europe", "Portugal": "Europe", "Prague, Czech Kingdom": "Europe",
+    "Romania": "Europe", "Rome, Byzantine Empire": "Europe", "Russia": "Europe", "Spain": "Europe",
+    "Staphorst, Netherlands": "Europe", "Tenerife, Spain": "Europe", "United Kingdom": "Europe",
+    "Vienna, Austria": "Europe", "Yugoslavia": "Europe", "Roman Empire": "Europe",
+    "Britain (England) and later continental Europe": "Europe", "Greece (Northern Greece, Roman Republic)": "Europe",
     "Balkans": "Europe",
+
+    # Oceania
+    "Australia": "Oceania", "Fiji": "Oceania", "Fremantle, Western Australia": "Oceania",
+    "Hawaiian Kingdom": "Oceania", "New South Wales, Australia": "Oceania", "New Zealand": "Oceania",
+    "Papua New Guinea": "Oceania", "Queensland, Australia": "Oceania", "Samoa": "Oceania",
+    "Sydney, Australia": "Oceania", "Victoria, Australia": "Oceania",
+
+    # Multiple/Global
+    "Asia, Africa, Europe, South America": "Multiple", "Asia, Africa, Europe, and Americas": "Multiple",
+    "Asia, Europe": "Multiple", "Asia, Europe, North America": "Multiple", "Asia, North Africa, Europe": "Multiple",
+    "Asia-Pacific, Latin America": "Multiple", "Byzantine Empire": "Multiple", "Eurasia and North Africa": "Multiple",
+    "Europe and West Asia": "Multiple", "Europe, Asia, Africa": "Multiple", "Europe, North America, South America": "Multiple",
+    "Ottoman Empire": "Multiple", "Ottoman Empire, Egypt": "Multiple", "Worldwide": "Global",
+    "Worldwide, primarily concentrated in Guinea, Liberia, Sierra Leone": "Global",
+    "Byzantine Empire, West Asia, Africa": "Multiple",
+}
+df["Continent"] = df["Location"].map(continent_map).fillna("Unknown")
+df["Continent"] = df["Continent"].str.strip().str.title()
+
+
+# --- COORDINATE MAPPING (REFINED) ---
+# More specific coordinates to fix heatmap centering issues.
+coords_map = {
+    "Europe": (54.5, 15.2), "Asia": (34.0, 100.6), "Africa": (1.5, 17.3),
+    "North America": (40.0, -100.0), "South America": (-15.6, -56.1), "Oceania": (-22.7, 140.0),
+    "Worldwide": (0, 0), "Global": (0, 0), "Multiple": (30, 30),
+    "Roman Empire": (41.9, 12.5), "China": (35.8, 104.1), "India": (20.5, 78.9),
+    "United States": (37.0, -95.7), "Russia": (61.5, 105.3), "England": (52.3, -1.1),
+    "Italy": (41.8, 12.5), "France": (46.6, 1.8), "Spain": (40.4, -3.7),
+    "Mexico": (23.6, -102.5), "Japan": (36.2, 138.2), "Egypt": (26.8, 30.8),
+    "Iran": (32.4, 53.6), "Persia": (32.4, 53.6), "Ottoman Empire": (39.9, 32.8),
+    "Byzantine Empire": (41.0, 28.9), "West Africa": (9.6, -2.2),
+    "Central America": (12.8, -86.2), "South Africa": (-30.5, 22.9),
+    "Australia": (-25.2, 133.7), "Brazil": (-14.2, -51.9), "Canada": (56.1, -106.3),
+    "United Kingdom": (55.3, -3.4), "Germany": (51.1, 10.4),
+    "Scandinavia": (62.0, 15.0), "Middle East": (29.2, 42.6),
+    "Southeast Asia": (4.2, 101.9), "Eurasia and North Africa": (35, 40),
+    "Asia, Europe, North America": (45, 10), "Europe, Asia, Africa": (30, 30),
+    "Asia, North Africa, Europe": (35, 25), "Asia, Africa, Europe, and Americas": (0,0),
 }
 
-# --- Identify locations with unknown diseases ---
-unknown_df = df[~df["Disease_Known"]]
-unknown_locations = unknown_df["Location"].dropna().unique()
+# Function to get the best coordinate match
+def get_coords(location):
+    # First, try for an exact match
+    if location in coords_map:
+        return coords_map[location]
+    # If no exact match, find the best partial match from the keys
+    for key, val in coords_map.items():
+        if key.lower() in location.lower():
+            return val
+    return (0, 0) # Default if no match is found
 
-# print(f"\nTotal unique locations (unknown diseases): {len(unknown_locations)}\n")
-# print(sorted(unknown_locations))
+df["Coordinates"] = df["Location"].apply(get_coords)
+df[["Latitude", "Longitude"]] = df["Coordinates"].apply(pd.Series)
 
-# --- Unknown-disease locations ---
-continent_map.update({
-    "Britain (England) and later continental Europe": "Europe",
-    "Europe": "Europe",
-    "Greece (Northern Greece, Roman Republic)": "Europe",
-    "Greece, Libya, Egypt, Ethiopia": "Africa",  # spans both, Africa dominant region
-    "Han Dynasty": "Asia",
-    "Roman Empire": "Europe",
-    "South Africa": "Africa",
-    "Southern New England, British North America, especially the Wampanoag people": "North America",
-})
 
-# Add continent column
-df["Continent"] = df["Location"].map(continent_map).fillna("Unknown")
-
-# Check print
-# print(df[["Location", "Continent"]].head(10))
-# print(df["Continent"].value_counts())
-
-# Death Toll data conversion
+# --- DEATH TOLL PARSING ---
 def parse_death_toll(value):
-    """
-    Parse a messy 'Death toll (estimate)' string and return the UPPER bound as a numeric value.
-    Examples handled:
-      - "5-10 million" -> 10000000
-      - "75,000-100,000" -> 100000
-      - "10 million" -> 10000000
-      - "296 (as of 31 December 2020)" -> 296
-      - "unknown" -> np.nan
-    """
-    if pd.isna(value):
-        return np.nan
-
+    if pd.isna(value): return np.nan
     s = str(value).lower().strip()
+    if any(tok in s for tok in ("unknown", "n/a", "not known", "no data")): return np.nan
 
-    # Explicit unknowns
-    if any(tok in s for tok in ("unknown", "n/a", "not known", "no data")):
-        return np.nan
-
-    # Detect unit (prefer explicit words)
     unit = 1
-    if re.search(r"\b(billion|bn|billion\.)\b", s):
-        unit = 1_000_000_000
-    elif re.search(r"\b(million|milli?on|m\b)\b", s):
-        unit = 1_000_000
-    elif re.search(r"\b(thousand|k\b)\b", s):
-        unit = 1_000
+    if "billion" in s: unit = 1_000_000_000
+    elif "million" in s: unit = 1_000_000
+    elif "thousand" in s: unit = 1_000
 
-    # Also handle compact suffixes like "10m" or "2.5k"
-    suffix_match = re.search(r"([\d,.]+)\s*([mkbn])\b", s)
-    if suffix_match:
-        num_part = suffix_match.group(1).replace(",", "")
-        suffix = suffix_match.group(2)
-        try:
-            val = float(num_part)
-        except:
-            val = None
-        if val is not None:
-            if suffix == "k":
-                return val * 1_000
-            if suffix == "m":
-                return val * 1_000_000
-            if suffix in ("b", "bn"):
-                return val * 1_000_000_000
-
-    # Extract numeric tokens (handles commas)
-    numbers = re.findall(r"[\d]+(?:[,.\d]*\d)?", s)  # e.g. "75,000", "2.5"
-    cleaned = []
+    numbers = re.findall(r"[\d,.]+", s)
+    if not numbers: return np.nan
+    
+    cleaned_numbers = []
     for n in numbers:
-        n = n.replace(",", "")
-        if n.strip():
-            try:
-                cleaned.append(float(n))
-            except:
-                pass
+        try:
+            cleaned_numbers.append(float(n.replace(",", "")))
+        except ValueError:
+            continue
+            
+    if not cleaned_numbers: return np.nan
+    
+    # Return the highest number found, multiplied by the unit
+    return max(cleaned_numbers) * unit
 
-    if not cleaned:
-        return np.nan
-
-    # Use the UPPER bound (max)
-    max_val = max(cleaned)
-
-    # Apply the detected unit multiplier
-    return max_val * unit
-
-# Apply to your dataframe
 df["Death Toll (est)"] = df["Death toll (estimate)"].apply(parse_death_toll)
 
-coords_map = {
-    # --- Americas ---
-    "Americas": (15.0, -90.0),
-    "North America": (40.0, -100.0),
-    "South America": (-15.6, -56.1),
-    "Central America": (14.5, -90.5),
 
-    # --- Europe ---
-    "Europe": (54.5260, 15.2551),
-    "Western Europe": (48.5, 2.2),
-    "Eastern Europe": (52.0, 21.0),
-    "Northern Europe": (60.0, 15.0),
-    "Southern Europe": (42.5, 12.5),
+# --- FINAL CLEANUP & SAVE ---
+# Remove rows where essential data is missing for the map
+df_cleaned = df.dropna(subset=["Latitude", "Longitude", "Death Toll (est)", "Continent"])
+df_cleaned = df_cleaned[df_cleaned["Continent"] != "Unknown"]
 
-    # --- Africa ---
-    "Africa": (1.5, 17.3),
-    "North Africa": (26.0, 13.0),
-    "East Africa": (-1.5, 37.0),
-    "West Africa": (7.5, -5.0),
-    "South Africa": (-30.5595, 22.9375),
+# Overwrite the original CSV with the cleaned and processed data
+# This ensures the Streamlit app always reads clean data
+output_path = os.path.join(os.path.dirname(__file__), "PandemicChronoTable.csv")
+df_cleaned.to_csv(output_path, index=False)
 
-    # --- Asia ---
-    "Asia": (34.0479, 100.6197),
-    "East Asia": (35.0, 120.0),
-    "South Asia": (20.0, 78.0),
-    "Southeast Asia": (10.0, 105.0),
-    "West Asia": (32.0, 44.0),
-    "Middle East": (29.5, 45.0),
-
-    # --- Oceania ---
-    "Australia": (-25.2744, 133.7751),
-    "Oceania": (-22.7359, 140.0188),
-
-    # --- Specific & Historical Locations ---
-    "Asia, Africa, Europe, South America": (20.0, 20.0),  # generalized
-    "Asia, Africa, Europe, and Americas": (20.0, 20.0),
-    "Asia, Europe": (40.0, 60.0),
-    "Asia, Europe, North America": (40.0, 20.0),
-    "Asia, North Africa, Europe": (35.0, 25.0),
-    "Asia-Pacific, Latin America": (5.0, 140.0),
-    "Byzantine Empire, West Asia, Africa": (34.0, 38.0),
-    "Byzantine Empire, West Asia, Syria, Mesopotamia": (35.0, 40.0),
-    "Han Dynasty": (34.0, 108.0),
-    "Roman Empire": (41.9, 12.5),
-    "Ottoman Empire": (39.0, 35.0),
-    "Greece (Northern Greece, Roman Republic)": (40.6, 22.9),
-    "Greece, Libya, Egypt, Ethiopia": (24.0, 25.0),
-    "Southern New England, British North America, especially the Wampanoag people": (41.7, -70.6),
-    "Britain (England) and later continental Europe": (52.0, 0.0),
-
-    # --- Modern Countries / Cities (frequent ones) ---
-    "Amsterdam, Netherlands": (52.3676, 4.9041),
-    "Bangladesh": (23.6850, 90.3563),
-    "Brazil": (-14.2350, -51.9253),
-    "China": (35.8617, 104.1954),
-    "Egypt": (26.8206, 30.8025),
-    "England": (52.3555, -1.1743),
-    "Ethiopia": (9.1450, 40.4897),
-    "France": (46.6034, 1.8883),
-    "Germany": (51.1657, 10.4515),
-    "Greece": (39.0742, 21.8243),
-    "India": (20.5937, 78.9629),
-    "Iran": (32.4279, 53.6880),
-    "Italy": (41.8719, 12.5674),
-    "Japan": (36.2048, 138.2529),
-    "United States": (37.0902, -95.7129),
-    "United Kingdom": (55.3781, -3.4360),
-    "Worldwide": (0.0, 0.0),
-}
-
-# --- Map coordinates to each location ---
-df["Coordinates"] = df["Location"].map(coords_map)
-
-# Safely expand coordinates into two columns
-df["Latitude"] = df["Coordinates"].apply(lambda x: x[0] if isinstance(x, (list, tuple)) else np.nan)
-df["Longitude"] = df["Coordinates"].apply(lambda x: x[1] if isinstance(x, (list, tuple)) else np.nan)
-
-# Fill missing with 0 or leave as NaN depending on your use case
-df["Latitude"] = df["Latitude"].fillna(0)
-df["Longitude"] = df["Longitude"].fillna(0)
-
-# print(df[["Location", "Coordinates", "Latitude", "Longitude"]].head(15))
-
-# --- Remove rows with unknown diseases or missing death tolls ---
-df = df[(df["Disease_Known"]) & (df["Death Toll (est)"].notna())]
-
-# --- Overwrite the original CSV with cleaned data ---
-data_path = os.path.join(os.path.dirname(__file__), "..", "data", "PandemicChronoTable.csv")
-df.to_csv(data_path, index=False)
+print("Data cleaning and processing complete. `PandemicChronoTable.csv` has been updated.")
