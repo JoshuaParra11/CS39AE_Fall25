@@ -145,7 +145,6 @@ def render_data():
     # --- Data Prep ---
     geojson_path = os.path.join(os.path.dirname(__file__), "..", "data", "continents.geojson")
     
-    # *** FIX: Use 'Date' column instead of 'Year' for dropna and display ***
     required_cols_for_dropna = ["Latitude", "Longitude", "Continent", "Date", "Disease", "Death toll (estimate)"]
 
     map_df = df[(df["Latitude"] != 0) & (df["Longitude"] != 0)].dropna(
@@ -204,11 +203,13 @@ def render_data():
                 HeatMap(heat_data, radius=25, blur=15).add_to(m)
 
                 for _, row in pandemic_rows.iterrows():
-                    # *** FIX: Use 'Date' column and label it 'Time' ***
+                    # *** FIX: Added a div with min-width to the popup HTML ***
                     popup_html = f"""
-                    <b>Location:</b> {row['Location']}<br>
-                    <b>Time:</b> {row['Date']}<br>
-                    <b>Deaths:</b> {row['Death toll (estimate)']}
+                    <div style="min-width: 200px;">
+                        <b>Location:</b> {row['Location']}<br>
+                        <b>Time:</b> {row['Date']}<br>
+                        <b>Deaths:</b> {row['Death toll (estimate)']}
+                    </div>
                     """
                     folium.Marker(
                         location=[row["Latitude"], row["Longitude"]],
