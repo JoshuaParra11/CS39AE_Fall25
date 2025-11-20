@@ -1,3 +1,4 @@
+import streamlit as st
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -25,9 +26,10 @@ G = nx.DiGraph()
 for name1, name2 in data:
     G.add_edge(name1, name2)
 
+plt.figure(figsize=(10, 8))
 pos = nx.spring_layout(G)
 nx.draw(G, pos, with_labels=True, node_size=3000, node_color='purple',
         edge_color='white', font_size=10, font_weight='bold')
 
 plt.title("Lab 6.1 - Friendship Network")
-plt.show()
+st.pyplot(plt)
