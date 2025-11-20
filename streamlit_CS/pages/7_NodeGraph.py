@@ -29,7 +29,7 @@ for name1, name2 in data:
 plt.figure(figsize=(10, 8))
 pos = nx.spring_layout(G)
 nx.draw(G, pos, with_labels=True, node_size=3000, node_color='purple',
-        edge_color='white', font_size=10, font_weight='bold')
+        edge_color='skyblue', font_size=10, font_weight='bold')
 
 plt.title("Lab 6.1 - Friendship Network")
 st.pyplot(plt)
