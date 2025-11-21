@@ -1,3 +1,4 @@
+from networkx.algorithms.community import greedy_modularity_communities
 import streamlit as st
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -52,12 +53,41 @@ highest_between = betweenness_centrality[most_between_node]
 st.write(f"Node with highest betweenness centrality: **{most_between_node}** (score: {highest_between:.4f})")
 
 # Calculate closeness
-# ---- CLOSENESS CENTRALITY ----
 closeness_centrality = nx.closeness_centrality(G)
 
-# Node with highest closeness
 most_close_node = max(closeness_centrality, key=closeness_centrality.get)
 highest_closeness = closeness_centrality[most_close_node]
 
-# Display in Streamlit
 st.write(f"Node with highest closeness centrality: **{most_close_node}** (score: {highest_closeness:.4f})")
+
+# Community detection
+communities = greedy_modularity_communities(G)
+
+# Display communities in Streamlit
+st.subheader("Detected Friend Groups (Communities)")
+for i, community in enumerate(communities, 1):
+    st.write(f"Community {i}: {list(community)}")
+
+palette = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple"]
+node_to_comm = {}
+
+for c_index, comm in enumerate(communities):
+    for node in comm:
+        node_to_comm[node] = c_index
+
+community_colors = [palette[node_to_comm[n]] for n in G.nodes()]
+
+plt.figure(figsize=(10, 8))
+nx.draw(
+    G, pos,
+    with_labels=True,
+    node_size=3000,
+    node_color=community_colors,
+    edge_color="gray",
+    font_size=10,
+    font_weight="bold",
+    arrows=True
+)
+
+plt.title("Friendship Network Colored by Community")
+st.pyplot(plt)
