@@ -98,7 +98,7 @@ eigenvector_centrality = nx.eigenvector_centrality(G, max_iter=1000)
 most_influential = max(eigenvector_centrality, key=eigenvector_centrality.get)
 highest_eigen = eigenvector_centrality[most_influential]
 
-st.write(f"Most influential node (Eigenvector Centrality): **{most_influential}** (score: {highest_eigen:.4f})")
+st.write(f"Most influential node (Eigenvector Centrality): **{most_influential}** (score: {highest_eigen:.1f})")
 
 # Most influential node graph
 colors = [
@@ -120,3 +120,9 @@ nx.draw(
 
 plt.title("Most Influential Node (Eigenvector Centrality Highlighted)")
 st.pyplot(plt)
+
+# Comments
+st.subheader("Comments")
+st.write("Some findings are that despite the closeness of certain nodes such as Alice, Charlie and Diana, they have" \
+"different friendship groups. We also see that the cluster somehow leads to Jack despite being the farthest away" \
+"making the most influential node.")
