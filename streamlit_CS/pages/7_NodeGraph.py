@@ -37,9 +37,27 @@ st.pyplot(plt)
 # Calculate degree
 st.subheader("Degree Centrality (Most Connected Nodes)")
 
-# ---- RAW DEGREE COUNT ----
 degrees = dict(G.degree())
 most_connected_node = max(degrees, key=degrees.get)
 most_connections = degrees[most_connected_node]
 
 st.write(f"Most connected node: **{most_connected_node}** with **{most_connections}** connections")
+
+# Calculate betweeness
+betweenness_centrality = nx.betweenness_centrality(G)
+
+most_between_node = max(betweenness_centrality, key=betweenness_centrality.get)
+highest_between = betweenness_centrality[most_between_node]
+
+st.write(f"Node with highest betweenness centrality: **{most_between_node}** (score: {highest_between:.4f})")
+
+# Calculate closeness
+# ---- CLOSENESS CENTRALITY ----
+closeness_centrality = nx.closeness_centrality(G)
+
+# Node with highest closeness
+most_close_node = max(closeness_centrality, key=closeness_centrality.get)
+highest_closeness = closeness_centrality[most_close_node]
+
+# Display in Streamlit
+st.write(f"Node with highest closeness centrality: **{most_close_node}** (score: {highest_closeness:.4f})")
