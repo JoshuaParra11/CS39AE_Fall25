@@ -91,3 +91,32 @@ nx.draw(
 
 plt.title("Friendship Network Colored by Community")
 st.pyplot(plt)
+
+# Most influential node
+eigenvector_centrality = nx.eigenvector_centrality(G, max_iter=1000)
+
+most_influential = max(eigenvector_centrality, key=eigenvector_centrality.get)
+highest_eigen = eigenvector_centrality[most_influential]
+
+st.write(f"Most influential node (Eigenvector Centrality): **{most_influential}** (score: {highest_eigen:.4f})")
+
+# Most influential node graph
+colors = [
+    "red" if node == most_influential else "purple"
+    for node in G.nodes()
+]
+
+plt.figure(figsize=(10, 8))
+nx.draw(
+    G, pos,
+    with_labels=True,
+    node_size=3000,
+    node_color=colors,
+    edge_color='gray',
+    font_size=10,
+    font_weight='bold',
+    arrows=True
+)
+
+plt.title("Most Influential Node (Eigenvector Centrality Highlighted)")
+st.pyplot(plt)
