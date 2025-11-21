@@ -37,15 +37,9 @@ st.pyplot(plt)
 # Calculate degree
 st.subheader("Degree Centrality (Most Connected Nodes)")
 
-degree_centrality = nx.degree_centrality(G)
+# ---- RAW DEGREE COUNT ----
+degrees = dict(G.degree())
+most_connected_node = max(degrees, key=degrees.get)
+most_connections = degrees[most_connected_node]
 
-# Display each node's degree centrality
-for node, score in degree_centrality.items():
-    st.write(f"**{node}**: {score:.3f}")
-
-# Node with highest degree
-most_connected_node = max(degree_centrality, key=degree_centrality.get)
-highest_score = degree_centrality[most_connected_node]
-
-st.markdown("---")
-st.success(f"Most Connected Node: **{most_connected_node}** (Score: {highest_score:.3f})")
+st.write(f"Most connected node: **{most_connected_node}** with **{most_connections}** connections")
