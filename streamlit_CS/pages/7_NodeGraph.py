@@ -33,3 +33,19 @@ nx.draw(G, pos, with_labels=True, node_size=3000, node_color='purple',
 
 plt.title("Lab 6.1 - Friendship Network")
 st.pyplot(plt)
+
+# Calculate degree
+st.subheader("Degree Centrality (Most Connected Nodes)")
+
+degree_centrality = nx.degree_centrality(G)
+
+# Display each node's degree centrality
+for node, score in degree_centrality.items():
+    st.write(f"**{node}**: {score:.3f}")
+
+# Node with highest degree
+most_connected_node = max(degree_centrality, key=degree_centrality.get)
+highest_score = degree_centrality[most_connected_node]
+
+st.markdown("---")
+st.success(f"Most Connected Node: **{most_connected_node}** (Score: {highest_score:.3f})")
